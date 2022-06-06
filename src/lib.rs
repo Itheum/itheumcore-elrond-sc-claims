@@ -13,15 +13,31 @@ pub trait ClaimsContract:
     storage::StorageModule + events::EventsModule + views::ViewsModule
 {
     #[init]
-    fn init(&self, token: TokenIdentifier) {
+    fn init(&self) {
         self.is_paused().set(true);
+    }
+
+    #[only_owner]
+    #[endpoint(setRewardToken)]
+    fn set_reward_token(&self, token: TokenIdentifier) {
+        require!(
+            self.reward_token().is_empty(),
+            "Reward token is already set"
+        );
         self.reward_token().set(&token);
+    }
+
+    #[only_owner]
+    #[endpoint(pause)]
+    fn pause(&self) {
+        self.is_paused().set(!self.is_paused().get());
     }
 
     #[only_owner]
     #[payable("*")]
     #[endpoint(addClaim)]
     fn add_claim(&self, address: &ManagedAddress, claim_type: ClaimType) {
+        require!(!self.reward_token().is_empty(), "Reward token is not set");
         let (payment_amount, payment_token) = self.call_value().payment_token_pair();
         let current_claim = self.claim(address, &claim_type).get();
         let reward_token = self.reward_token().get();
@@ -45,6 +61,7 @@ pub trait ClaimsContract:
         &self,
         claims: MultiValueEncoded<MultiValue3<ManagedAddress, ClaimType, BigUint>>,
     ) {
+        require!(!self.reward_token().is_empty(), "Reward token is not set");
         let (payment_amount, payment_token) = self.call_value().payment_token_pair();
         let reward_token = self.reward_token().get();
         require!(
@@ -72,6 +89,7 @@ pub trait ClaimsContract:
     #[only_owner]
     #[endpoint(removeClaim)]
     fn remove_claim(&self, address: &ManagedAddress, claim_type: ClaimType, amount: BigUint) {
+        require!(!self.reward_token().is_empty(), "Reward token is not set");
         let current_claim = self.claim(address, &claim_type).get();
         let owner = self.blockchain().get_owner_address();
         let reward_token = self.reward_token().get();
@@ -91,6 +109,7 @@ pub trait ClaimsContract:
         &self,
         claims: MultiValueEncoded<MultiValue3<ManagedAddress, ClaimType, BigUint>>,
     ) {
+        require!(!self.reward_token().is_empty(), "Reward token is not set");
         let mut sum_of_claims = BigUint::zero();
         for item in claims.into_iter() {
             let tuple = item.into_tuple();
@@ -115,6 +134,7 @@ pub trait ClaimsContract:
 
     #[endpoint(claim)]
     fn harvest_claim(&self, claim_type: OptionalValue<ClaimType>) {
+        require!(!self.reward_token().is_empty(), "Reward token is not set");
         let reward_token = self.reward_token().get();
         let caller = self.blockchain().get_caller();
         require!(!self.is_paused().get(), "Contract is paused");

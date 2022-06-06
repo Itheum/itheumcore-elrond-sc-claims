@@ -47,7 +47,18 @@ where
 
     blockchain_wrapper
         .execute_tx(&owner_address, &cf_wrapper, &rust_zero, |sc| {
-            sc.init(managed_token_id!(TOKEN_ID));
+            sc.init();
+        })
+        .assert_ok();
+    blockchain_wrapper
+        .execute_tx(&owner_address, &cf_wrapper, &rust_zero, |sc| {
+            sc.set_reward_token(managed_token_id!(TOKEN_ID));
+        })
+        .assert_ok();
+
+    blockchain_wrapper
+        .execute_tx(&owner_address, &cf_wrapper, &rust_zero, |sc| {
+            sc.pause();
         })
         .assert_ok();
 
@@ -72,7 +83,7 @@ fn deploy_test() {
             &setup.contract_wrapper,
             &rust_biguint!(0u64),
             |sc| {
-                sc.init(managed_token_id!(TOKEN_ID));
+                sc.init();
             },
         )
         .assert_ok();
@@ -128,7 +139,7 @@ fn add_and_remove_claim_test() {
                 );
             },
         )
-        .assert_user_error("Cannot remove more than current claims");
+        .assert_user_error("Cannot remove more than current claim");
 }
 
 #[test]
