@@ -1,4 +1,5 @@
 #![no_std]
+#![feature(generic_associated_types)]
 
 elrond_wasm::imports!();
 
@@ -41,6 +42,7 @@ pub trait ClaimsContract:
         let (payment_amount, payment_token) = self.call_value().payment_token_pair();
         let current_claim = self.claim(address, &claim_type).get();
         let reward_token = self.reward_token().get();
+        let timestamp = self.blockchain().get_block_timestamp();
         require!(
             payment_token == reward_token,
             "Can only add designated token"
@@ -51,6 +53,7 @@ pub trait ClaimsContract:
         );
         self.claim(address, &claim_type)
             .set(current_claim + &payment_amount);
+        self.claim_add_date(address, &claim_type).set(timestamp);
         self.claim_added_event(address, &claim_type, payment_amount);
     }
 
@@ -64,6 +67,7 @@ pub trait ClaimsContract:
         require!(!self.reward_token().is_empty(), "Reward token is not set");
         let (payment_amount, payment_token) = self.call_value().payment_token_pair();
         let reward_token = self.reward_token().get();
+        let timestamp = self.blockchain().get_block_timestamp();
         require!(
             payment_token == reward_token,
             "Can only add designated token"
@@ -77,6 +81,7 @@ pub trait ClaimsContract:
             let tuple = item.into_tuple();
             let current_claim = self.claim(&tuple.0, &tuple.1).get();
             self.claim(&tuple.0, &tuple.1).set(current_claim + &tuple.2);
+            self.claim_add_date(&tuple.0, &tuple.1).set(timestamp);
             sum_of_claims += &tuple.2;
             self.claim_added_event(&tuple.0, &tuple.1, tuple.2);
         }
@@ -93,12 +98,14 @@ pub trait ClaimsContract:
         let current_claim = self.claim(address, &claim_type).get();
         let owner = self.blockchain().get_owner_address();
         let reward_token = self.reward_token().get();
+        let timestamp = self.blockchain().get_block_timestamp();
         require!(
             current_claim >= amount,
             "Cannot remove more than current claim"
         );
         self.claim(address, &claim_type)
             .set(current_claim - &amount);
+        self.claim_add_date(address, &claim_type).set(timestamp);
         self.send().direct(&owner, &reward_token, 0, &amount, &[]);
         self.claim_removed_event(address, &claim_type, amount);
     }
@@ -111,9 +118,11 @@ pub trait ClaimsContract:
     ) {
         require!(!self.reward_token().is_empty(), "Reward token is not set");
         let mut sum_of_claims = BigUint::zero();
+        let timestamp = self.blockchain().get_block_timestamp();
         for item in claims.into_iter() {
             let tuple = item.into_tuple();
             let current_claim = self.claim(&tuple.0, &tuple.1).get();
+            self.claim_add_date(&tuple.0, &tuple.1).set(timestamp);
             require!(
                 current_claim >= tuple.2,
                 "Cannot remove more than current claim"

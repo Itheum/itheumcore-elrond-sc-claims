@@ -7,15 +7,12 @@
 elrond_wasm_node::wasm_endpoints! {
     claims
     (
-        addClaim
-        addClaims
-        claim
         isPaused
         pause
-        removeClaim
-        removeClaims
         setRewardToken
         viewClaim
+        viewClaimAddDate
+        viewClaimWithDate
         viewClaims
         viewTokenIdentifier
     )

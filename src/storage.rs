@@ -19,6 +19,14 @@ pub trait StorageModule {
     fn claim(&self, address: &ManagedAddress, claim_type: &ClaimType)
         -> SingleValueMapper<BigUint>;
 
+    #[view(viewClaimAddDate)]
+    #[storage_mapper("claimDate")]
+    fn claim_add_date(
+        &self,
+        address: &ManagedAddress,
+        claim_type: &ClaimType,
+    ) -> SingleValueMapper<u64>;
+
     #[view(isPaused)]
     #[storage_mapper("isPaused")]
     fn is_paused(&self) -> SingleValueMapper<bool>;
