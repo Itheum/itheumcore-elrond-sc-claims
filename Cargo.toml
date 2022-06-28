@@ -1,0 +1,20 @@
+[package]
+name = "claims"
+version = "0.0.0"
+authors = [ "you",]
+edition = "2018"
+publish = false
+
+[lib]
+path = "src/lib.rs"
+
+[dev-dependencies]
+num-bigint = "0.4.2"
+num-traits = "0.2"
+hex = "0.4"
+
+[dependencies.elrond-wasm]
+version = "0.31.1"
+
+[dev-dependencies.elrond-wasm-debug]
+version = "0.31.1"
