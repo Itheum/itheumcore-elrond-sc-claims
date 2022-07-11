@@ -1,8 +1,10 @@
+use claims::storage::StorageModule;
 use claims::*;
 use elrond_wasm::{
     elrond_codec::multi_types::{MultiValue3, OptionalValue},
     types::{Address, MultiValueEncoded},
 };
+
 use elrond_wasm_debug::{
     managed_address, managed_biguint, managed_token_id, rust_biguint, testing_framework::*,
     DebugApi,
@@ -53,6 +55,12 @@ where
     blockchain_wrapper
         .execute_tx(&owner_address, &cf_wrapper, &rust_zero, |sc| {
             sc.set_reward_token(managed_token_id!(TOKEN_ID));
+        })
+        .assert_ok();
+
+    blockchain_wrapper
+        .execute_query(&cf_wrapper, |sc| {
+            assert_eq!(sc.is_paused().get(), true);
         })
         .assert_ok();
 
@@ -185,6 +193,35 @@ fn add_and_remove_claims_test() {
             &setup.contract_wrapper,
             TOKEN_ID,
             0,
+            &rust_biguint!(1_700_000),
+            |sc| {
+                let mut args = MultiValueEncoded::new();
+                args.push(MultiValue3(
+                    (
+                        managed_address!(first_user_addr),
+                        storage::ClaimType::Airdrop,
+                        managed_biguint!(1_000_000),
+                    )
+                        .into(),
+                ));
+                args.push(MultiValue3(
+                    (
+                        managed_address!(second_user_addr),
+                        storage::ClaimType::Allocation,
+                        managed_biguint!(1_000_000),
+                    )
+                        .into(),
+                ));
+                sc.add_claims(args);
+            },
+        )
+        .assert_user_error("Claims added must equal payment amount");
+    b_wrapper
+        .execute_esdt_transfer(
+            owner_address,
+            &setup.contract_wrapper,
+            TOKEN_ID,
+            0,
             &rust_biguint!(0),
             |sc| {
                 let mut args = MultiValueEncoded::new();
@@ -259,6 +296,57 @@ fn add_claim_wrong_token_test() {
         )
         .assert_user_error("Can only add designated token");
 }
+
+#[test]
+fn reset_reward_token_test() {
+    let mut setup = setup_contract(claims::contract_obj);
+    let b_wrapper = &mut setup.blockchain_wrapper;
+    let owner_address = &setup.owner_address;
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.set_reward_token(managed_token_id!(TOKEN_ID));
+            },
+        )
+        .assert_user_error("Reward token is already set");
+}
+
+#[test]
+fn harvest_claim_in_pause_test() {
+    let mut setup = setup_contract(claims::contract_obj);
+    let b_wrapper = &mut setup.blockchain_wrapper;
+    let owner_address = &setup.owner_address;
+    let user_addr = &setup.second_user_address;
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.pause();
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_esdt_transfer(
+            user_addr,
+            &setup.contract_wrapper,
+            TOKEN_ID,
+            0,
+            &rust_biguint!(0),
+            |sc| {
+                sc.harvest_claim(OptionalValue::Some(storage::ClaimType::Airdrop));
+            },
+        )
+        .assert_user_error("Contract is paused");
+}
+
 #[test]
 fn harvest_claim_test() {
     let mut setup = setup_contract(claims::contract_obj);
