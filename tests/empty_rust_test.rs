@@ -81,7 +81,7 @@ where
     }
 }
 
-#[test]
+#[test] //Tests whether the contrat is deployed and initialized after deployment correctly
 fn deploy_test() {
     let mut setup = setup_contract(claims::contract_obj);
     setup
@@ -97,7 +97,7 @@ fn deploy_test() {
         .assert_ok();
 }
 
-#[test]
+#[test] //Tests wether adding and removing singular claims works and also if removing returns an error if trying to remove more than the available claim
 fn add_and_remove_claim_test() {
     let mut setup = setup_contract(claims::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
@@ -150,7 +150,7 @@ fn add_and_remove_claim_test() {
         .assert_user_error("Cannot remove more than current claim");
 }
 
-#[test]
+#[test] //Same tests as the ones for singular claims, but for multiple claims + testing whether adding claims, but not sending enough tokens returns an error
 fn add_and_remove_claims_test() {
     let mut setup = setup_contract(claims::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
@@ -276,7 +276,7 @@ fn add_and_remove_claims_test() {
         .assert_user_error("Cannot remove more than current claim");
 }
 
-#[test]
+#[test] //Tests whether the transaction to add a token fails in the case in which a different token than the reward token is sent
 fn add_claim_wrong_token_test() {
     let mut setup = setup_contract(claims::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
@@ -297,7 +297,7 @@ fn add_claim_wrong_token_test() {
         .assert_user_error("Can only add designated token");
 }
 
-#[test]
+#[test] //Tests whether one can set the reward token only once
 fn reset_reward_token_test() {
     let mut setup = setup_contract(claims::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
@@ -315,7 +315,7 @@ fn reset_reward_token_test() {
         .assert_user_error("Reward token is already set");
 }
 
-#[test]
+#[test] //Tests whether claiming is impossible in pause state
 fn harvest_claim_in_pause_test() {
     let mut setup = setup_contract(claims::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
@@ -347,7 +347,7 @@ fn harvest_claim_in_pause_test() {
         .assert_user_error("Contract is paused");
 }
 
-#[test]
+#[test] //Tests whether users can claim
 fn harvest_claim_test() {
     let mut setup = setup_contract(claims::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
@@ -381,7 +381,7 @@ fn harvest_claim_test() {
         .assert_ok();
 }
 
-#[test]
+#[test] //Test wether the transaction to claim returns an error if no claims are present for the user for the type he tries to claim
 fn harvest_wrong_claim_type_test() {
     let mut setup = setup_contract(claims::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
@@ -415,7 +415,7 @@ fn harvest_wrong_claim_type_test() {
         .assert_user_error("Cannot claim 0 tokens");
 }
 
-#[test]
+#[test] //Tests whether claiming all claim types at once works
 fn harvest_all_claims_test() {
     let mut setup = setup_contract(claims::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
