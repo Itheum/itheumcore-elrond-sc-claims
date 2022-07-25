@@ -119,12 +119,12 @@ pub trait ClaimsContract:
             let tuple = item.into_tuple();
             let current_claim = self.claim(&tuple.0, &tuple.1).get();
             self.claim_add_date(&tuple.0, &tuple.1).set(timestamp);
+            self.require_value_not_zero(&tuple.2);
             self.require_remove_claim_is_valid(&current_claim, &tuple.2);
             sum_of_claims += &tuple.2;
             self.claim(&tuple.0, &tuple.1).set(current_claim - &tuple.2);
             self.claim_removed_event(&tuple.0, &tuple.1, &tuple.2);
         }
-        self.require_value_not_zero(&sum_of_claims);
         let owner = self.blockchain().get_owner_address();
         let reward_token = self.reward_token().get();
         self.send()
