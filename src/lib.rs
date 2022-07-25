@@ -59,7 +59,7 @@ pub trait ClaimsContract:
         self.claim(address, &claim_type)
             .set(current_claim + &payment_amount);
         self.claim_add_date(address, &claim_type).set(timestamp);
-        self.claim_added_event(address, &claim_type, payment_amount);
+        self.claim_added_event(address, &claim_type, &payment_amount);
     }
 
     #[only_owner]
@@ -81,7 +81,7 @@ pub trait ClaimsContract:
             self.claim(&tuple.0, &tuple.1).set(current_claim + &tuple.2);
             self.claim_add_date(&tuple.0, &tuple.1).set(timestamp);
             sum_of_claims += &tuple.2;
-            self.claim_added_event(&tuple.0, &tuple.1, tuple.2);
+            self.claim_added_event(&tuple.0, &tuple.1, &tuple.2);
         }
         require!(
             sum_of_claims == payment_amount,
@@ -101,8 +101,8 @@ pub trait ClaimsContract:
         self.claim(address, &claim_type)
             .set(current_claim - &amount);
         self.claim_add_date(address, &claim_type).set(timestamp);
+        self.claim_removed_event(address, &claim_type, &amount);
         self.send().direct(&owner, &reward_token, 0, &amount, &[]);
-        self.claim_removed_event(address, &claim_type, amount);
     }
 
     #[only_owner]
@@ -121,7 +121,7 @@ pub trait ClaimsContract:
             self.require_remove_claim_is_valid(&current_claim, &tuple.2);
             sum_of_claims += &tuple.2;
             self.claim(&tuple.0, &tuple.1).set(current_claim - &tuple.2);
-            self.claim_removed_event(&tuple.0, &tuple.1, tuple.2);
+            self.claim_removed_event(&tuple.0, &tuple.1, &tuple.2);
         }
         self.require_value_not_zero(&sum_of_claims);
         let owner = self.blockchain().get_owner_address();
@@ -136,23 +136,23 @@ pub trait ClaimsContract:
         self.require_reward_token_is_set();
         let reward_token = self.reward_token().get();
         let caller = self.blockchain().get_caller();
+        let claim;
         if let OptionalValue::Some(what_type_to_claim) = claim_type {
-            let claim = self.claim(&caller, &what_type_to_claim).get();
+            claim = self.claim(&caller, &what_type_to_claim).get();
             self.require_value_not_zero(&claim);
-            self.send().direct(&caller, &reward_token, 0, &claim, &[]);
             self.claim(&caller, &what_type_to_claim)
                 .set(BigUint::zero());
-            self.claim_collected_event(&caller, &what_type_to_claim, claim);
+            self.claim_collected_event(&caller, &what_type_to_claim, &claim);
         } else {
-            let claim = self.view_claims(&caller);
+            claim = self.view_claims(&caller);
             self.require_value_not_zero(&claim);
-            self.send().direct(&caller, &reward_token, 0, &claim, &[]);
             self.claim(&caller, &ClaimType::Reward).set(BigUint::zero());
             self.claim(&caller, &ClaimType::Airdrop)
                 .set(BigUint::zero());
             self.claim(&caller, &ClaimType::Allocation)
                 .set(BigUint::zero());
-            self.all_claims_collected_event(&caller, claim);
+            self.all_claims_collected_event(&caller, &claim);
         }
+        self.send().direct(&caller, &reward_token, 0, &claim, &[]);
     }
 }

@@ -10,7 +10,7 @@ pub trait EventsModule {
         &self,
         #[indexed] address: &ManagedAddress,
         #[indexed] claim_type: &ClaimType,
-        amount: BigUint,
+        amount: &BigUint,
     );
 
     #[event("claimRemoved")]
@@ -18,7 +18,7 @@ pub trait EventsModule {
         &self,
         #[indexed] address: &ManagedAddress,
         #[indexed] claim_type: &ClaimType,
-        amount: BigUint,
+        amount: &BigUint,
     );
 
     #[event("claimCollected")]
@@ -26,9 +26,9 @@ pub trait EventsModule {
         &self,
         #[indexed] address: &ManagedAddress,
         #[indexed] claim_type: &ClaimType,
-        amount: BigUint,
+        amount: &BigUint,
     );
 
     #[event("allClaimsCollected")]
-    fn all_claims_collected_event(&self, #[indexed] address: &ManagedAddress, amount: BigUint);
+    fn all_claims_collected_event(&self, #[indexed] address: &ManagedAddress, amount: &BigUint);
 }
