@@ -28,7 +28,4 @@ pub trait EventsModule {
         #[indexed] claim_type: &ClaimType,
         amount: &BigUint,
     );
-
-    #[event("allClaimsCollected")]
-    fn all_claims_collected_event(&self, #[indexed] address: &ManagedAddress, amount: &BigUint);
 }

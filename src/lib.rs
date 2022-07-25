@@ -136,7 +136,7 @@ pub trait ClaimsContract:
         self.require_reward_token_is_set();
         let reward_token = self.reward_token().get();
         let caller = self.blockchain().get_caller();
-        let claim;
+        let mut claim = BigUint::zero();
         if let OptionalValue::Some(what_type_to_claim) = claim_type {
             claim = self.claim(&caller, &what_type_to_claim).get();
             self.require_value_not_zero(&claim);
@@ -144,14 +144,30 @@ pub trait ClaimsContract:
                 .set(BigUint::zero());
             self.claim_collected_event(&caller, &what_type_to_claim, &claim);
         } else {
-            claim = self.view_claims(&caller);
+            let reward_claim = self.claim(&caller, &ClaimType::Reward).get();
+            if reward_claim > BigUint::zero() {
+                claim += &reward_claim;
+                self.claim_collected_event(&caller, &ClaimType::Reward, &reward_claim);
+                self.claim(&caller, &ClaimType::Reward).set(BigUint::zero());
+            }
+
+            let airdrop_claim = self.claim(&caller, &ClaimType::Airdrop).get();
+            if airdrop_claim > BigUint::zero() {
+                claim += &airdrop_claim;
+                self.claim_collected_event(&caller, &ClaimType::Airdrop, &airdrop_claim);
+                self.claim(&caller, &ClaimType::Airdrop)
+                    .set(BigUint::zero());
+            }
+
+            let allocation_claim = self.claim(&caller, &ClaimType::Allocation).get();
+            if allocation_claim > BigUint::zero() {
+                claim += &allocation_claim;
+                self.claim_collected_event(&caller, &ClaimType::Allocation, &allocation_claim);
+                self.claim(&caller, &ClaimType::Allocation)
+                    .set(BigUint::zero());
+            }
+
             self.require_value_not_zero(&claim);
-            self.claim(&caller, &ClaimType::Reward).set(BigUint::zero());
-            self.claim(&caller, &ClaimType::Airdrop)
-                .set(BigUint::zero());
-            self.claim(&caller, &ClaimType::Allocation)
-                .set(BigUint::zero());
-            self.all_claims_collected_event(&caller, &claim);
         }
         self.send().direct(&caller, &reward_token, 0, &claim, &[]);
     }
