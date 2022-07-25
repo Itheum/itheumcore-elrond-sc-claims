@@ -6,12 +6,16 @@ elrond_wasm::imports!();
 use crate::storage::ClaimType;
 
 pub mod events;
+pub mod requirements;
 pub mod storage;
 pub mod views;
 
 #[elrond_wasm::contract]
 pub trait ClaimsContract:
-    storage::StorageModule + events::EventsModule + views::ViewsModule
+    storage::StorageModule
+    + events::EventsModule
+    + views::ViewsModule
+    + requirements::RequirementsModule
 {
     #[init]
     fn init(&self) {
@@ -46,19 +50,12 @@ pub trait ClaimsContract:
     #[payable("*")]
     #[endpoint(addClaim)]
     fn add_claim(&self, address: &ManagedAddress, claim_type: ClaimType) {
-        require!(!self.reward_token().is_empty(), "Reward token is not set");
+        self.require_reward_token_is_set();
         let (payment_amount, payment_token) = self.call_value().payment_token_pair();
         let current_claim = self.claim(address, &claim_type).get();
-        let reward_token = self.reward_token().get();
         let timestamp = self.blockchain().get_block_timestamp();
-        require!(
-            payment_token == reward_token,
-            "Can only add designated token"
-        );
-        require!(
-            payment_amount > BigUint::zero(),
-            "Must add more than 0 tokens"
-        );
+        self.require_token_is_reward(payment_token);
+        self.require_value_not_zero(&payment_amount);
         self.claim(address, &claim_type)
             .set(current_claim + &payment_amount);
         self.claim_add_date(address, &claim_type).set(timestamp);
@@ -72,18 +69,11 @@ pub trait ClaimsContract:
         &self,
         claims: MultiValueEncoded<MultiValue3<ManagedAddress, ClaimType, BigUint>>,
     ) {
-        require!(!self.reward_token().is_empty(), "Reward token is not set");
+        self.require_reward_token_is_set();
         let (payment_amount, payment_token) = self.call_value().payment_token_pair();
-        let reward_token = self.reward_token().get();
         let timestamp = self.blockchain().get_block_timestamp();
-        require!(
-            payment_token == reward_token,
-            "Can only add designated token"
-        );
-        require!(
-            payment_amount > BigUint::zero(),
-            "Must add more than 0 tokens"
-        );
+        self.require_token_is_reward(payment_token);
+        self.require_value_not_zero(&payment_amount);
         let mut sum_of_claims = BigUint::zero();
         for item in claims.into_iter() {
             let tuple = item.into_tuple();
@@ -102,15 +92,12 @@ pub trait ClaimsContract:
     #[only_owner]
     #[endpoint(removeClaim)]
     fn remove_claim(&self, address: &ManagedAddress, claim_type: ClaimType, amount: BigUint) {
-        require!(!self.reward_token().is_empty(), "Reward token is not set");
+        self.require_reward_token_is_set();
         let current_claim = self.claim(address, &claim_type).get();
         let owner = self.blockchain().get_owner_address();
         let reward_token = self.reward_token().get();
         let timestamp = self.blockchain().get_block_timestamp();
-        require!(
-            current_claim >= amount,
-            "Cannot remove more than current claim"
-        );
+        self.require_remove_claim_is_valid(&current_claim, &amount);
         self.claim(address, &claim_type)
             .set(current_claim - &amount);
         self.claim_add_date(address, &claim_type).set(timestamp);
@@ -124,25 +111,19 @@ pub trait ClaimsContract:
         &self,
         claims: MultiValueEncoded<MultiValue3<ManagedAddress, ClaimType, BigUint>>,
     ) {
-        require!(!self.reward_token().is_empty(), "Reward token is not set");
+        self.require_reward_token_is_set();
         let mut sum_of_claims = BigUint::zero();
         let timestamp = self.blockchain().get_block_timestamp();
         for item in claims.into_iter() {
             let tuple = item.into_tuple();
             let current_claim = self.claim(&tuple.0, &tuple.1).get();
             self.claim_add_date(&tuple.0, &tuple.1).set(timestamp);
-            require!(
-                current_claim >= tuple.2,
-                "Cannot remove more than current claim"
-            );
+            self.require_remove_claim_is_valid(&current_claim, &tuple.2);
             sum_of_claims += &tuple.2;
             self.claim(&tuple.0, &tuple.1).set(current_claim - &tuple.2);
             self.claim_removed_event(&tuple.0, &tuple.1, tuple.2);
         }
-        require!(
-            sum_of_claims > BigUint::zero(),
-            "Claims removed must be greater than 0"
-        );
+        self.require_value_not_zero(&sum_of_claims);
         let owner = self.blockchain().get_owner_address();
         let reward_token = self.reward_token().get();
         self.send()
@@ -152,19 +133,19 @@ pub trait ClaimsContract:
     #[endpoint(claim)]
     fn harvest_claim(&self, claim_type: OptionalValue<ClaimType>) {
         require!(!self.is_paused().get(), "Contract is paused");
-        require!(!self.reward_token().is_empty(), "Reward token is not set");
+        self.require_reward_token_is_set();
         let reward_token = self.reward_token().get();
         let caller = self.blockchain().get_caller();
         if let OptionalValue::Some(what_type_to_claim) = claim_type {
             let claim = self.claim(&caller, &what_type_to_claim).get();
-            require!(claim > BigUint::zero(), "Cannot claim 0 tokens");
+            self.require_value_not_zero(&claim);
             self.send().direct(&caller, &reward_token, 0, &claim, &[]);
             self.claim(&caller, &what_type_to_claim)
                 .set(BigUint::zero());
             self.claim_collected_event(&caller, &what_type_to_claim, claim);
         } else {
             let claim = self.view_claims(&caller);
-            require!(claim > BigUint::zero(), "Cannot claim 0 tokens");
+            self.require_value_not_zero(&claim);
             self.send().direct(&caller, &reward_token, 0, &claim, &[]);
             self.claim(&caller, &ClaimType::Reward).set(BigUint::zero());
             self.claim(&caller, &ClaimType::Airdrop)

@@ -412,7 +412,7 @@ fn harvest_wrong_claim_type_test() {
                 sc.harvest_claim(OptionalValue::Some(storage::ClaimType::Reward));
             },
         )
-        .assert_user_error("Cannot claim 0 tokens");
+        .assert_user_error("Operations must have non-zero value");
 }
 
 #[test] //Tests whether claiming all claim types at once works
