@@ -15,6 +15,7 @@ elrond_wasm_node::wasm_endpoints! {
         removeClaim
         removeClaims
         setRewardToken
+        unpause
         viewClaim
         viewClaimAddDate
         viewClaimWithDate

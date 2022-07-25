@@ -66,7 +66,7 @@ where
 
     blockchain_wrapper
         .execute_tx(&owner_address, &cf_wrapper, &rust_zero, |sc| {
-            sc.pause();
+            sc.unpause();
         })
         .assert_ok();
 

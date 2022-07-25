@@ -31,7 +31,15 @@ pub trait ClaimsContract:
     #[only_owner]
     #[endpoint(pause)]
     fn pause(&self) {
-        self.is_paused().set(!self.is_paused().get());
+        require!(!self.is_paused().get(), "Contract is already paused");
+        self.is_paused().set(true);
+    }
+
+    #[only_owner]
+    #[endpoint(unpause)]
+    fn unpause(&self) {
+        require!(self.is_paused().get(), "Contract is already unpaused");
+        self.is_paused().set(false);
     }
 
     #[only_owner]
