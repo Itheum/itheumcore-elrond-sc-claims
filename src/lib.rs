@@ -97,6 +97,7 @@ pub trait ClaimsContract:
         let owner = self.blockchain().get_owner_address();
         let reward_token = self.reward_token().get();
         let timestamp = self.blockchain().get_block_timestamp();
+        self.require_value_not_zero(&amount);
         self.require_remove_claim_is_valid(&current_claim, &amount);
         self.claim(address, &claim_type)
             .set(current_claim - &amount);
