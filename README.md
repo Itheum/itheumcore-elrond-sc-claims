@@ -1,5 +1,7 @@
 # Itheum Core Elrond - Claims Smart Contract
 
+<<<<<<< HEAD
+
 ## Abstract
 
 The claims smart contract is the tool that stands at the heart of collaboration between Itheum and its community. Whether it's a reward for helping the project, an airdrop or some allocation of tokens, the claims smart contract is the tool that allows Itheum to give tokens to all community members that are using the Elrond blockchain.
