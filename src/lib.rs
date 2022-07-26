@@ -80,12 +80,13 @@ pub trait ClaimsContract:
         self.require_value_not_zero(&payment_amount);
         let mut sum_of_claims = BigUint::zero();
         for item in claims.into_iter() {
-            let tuple = item.into_tuple();
-            let current_claim = self.claim(&tuple.0, &tuple.1).get();
-            self.claim(&tuple.0, &tuple.1).set(current_claim + &tuple.2);
-            self.claim_add_date(&tuple.0, &tuple.1).set(timestamp);
-            sum_of_claims += &tuple.2;
-            self.claim_added_event(&tuple.0, &tuple.1, &tuple.2);
+            let (address, claim_type, amount) = item.into_tuple();
+            let current_claim = self.claim(&address, &claim_type).get();
+            self.claim(&address, &claim_type)
+                .set(current_claim + &amount);
+            self.claim_add_date(&address, &claim_type).set(timestamp);
+            sum_of_claims += &amount;
+            self.claim_added_event(&address, &claim_type, &amount);
         }
         require!(
             sum_of_claims == payment_amount,
@@ -124,14 +125,15 @@ pub trait ClaimsContract:
         let mut sum_of_claims = BigUint::zero();
         let timestamp = self.blockchain().get_block_timestamp();
         for item in claims.into_iter() {
-            let tuple = item.into_tuple();
-            let current_claim = self.claim(&tuple.0, &tuple.1).get();
-            self.claim_add_date(&tuple.0, &tuple.1).set(timestamp);
-            self.require_value_not_zero(&tuple.2);
-            self.require_remove_claim_is_valid(&current_claim, &tuple.2);
-            sum_of_claims += &tuple.2;
-            self.claim(&tuple.0, &tuple.1).set(current_claim - &tuple.2);
-            self.claim_removed_event(&tuple.0, &tuple.1, &tuple.2);
+            let (address, claim_type, amount) = item.into_tuple();
+            let current_claim = self.claim(&address, &claim_type).get();
+            self.claim_add_date(&address, &claim_type).set(timestamp);
+            self.require_value_not_zero(&amount);
+            self.require_remove_claim_is_valid(&current_claim, &amount);
+            sum_of_claims += &amount;
+            self.claim(&address, &claim_type)
+                .set(current_claim - &amount);
+            self.claim_removed_event(&address, &claim_type, &amount);
         }
         let owner = self.blockchain().get_owner_address();
         let reward_token = self.reward_token().get();
