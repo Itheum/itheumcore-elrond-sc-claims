@@ -5,6 +5,7 @@
 
 # The erdpy output
 output*
+deplyOutput
 
 wallets/
 commands.txt
