@@ -70,6 +70,10 @@ pub trait ClaimsContract:
         claims: MultiValueEncoded<MultiValue3<ManagedAddress, ClaimType, BigUint>>,
     ) {
         self.require_reward_token_is_set();
+        require!(
+            claims.len() <= 200,
+            "Exceeded maximum number of claims per operation (200)"
+        );
         let (payment_amount, payment_token) = self.call_value().payment_token_pair();
         let timestamp = self.blockchain().get_block_timestamp();
         self.require_token_is_reward(payment_token);
@@ -113,6 +117,10 @@ pub trait ClaimsContract:
         claims: MultiValueEncoded<MultiValue3<ManagedAddress, ClaimType, BigUint>>,
     ) {
         self.require_reward_token_is_set();
+        require!(
+            claims.len() <= 200,
+            "Exceeded maximum number of claims per operation (20)"
+        );
         let mut sum_of_claims = BigUint::zero();
         let timestamp = self.blockchain().get_block_timestamp();
         for item in claims.into_iter() {
