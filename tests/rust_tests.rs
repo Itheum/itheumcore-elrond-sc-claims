@@ -54,7 +54,7 @@ where
         .assert_ok();
     blockchain_wrapper
         .execute_tx(&owner_address, &cf_wrapper, &rust_zero, |sc| {
-            sc.set_reward_token(managed_token_id!(TOKEN_ID));
+            sc.set_claim_token(managed_token_id!(TOKEN_ID));
         })
         .assert_ok();
 
@@ -309,7 +309,7 @@ fn reset_reward_token_test() {
             &setup.contract_wrapper,
             &rust_biguint!(0),
             |sc| {
-                sc.set_reward_token(managed_token_id!(TOKEN_ID));
+                sc.set_claim_token(managed_token_id!(TOKEN_ID));
             },
         )
         .assert_user_error("Reward token is already set");

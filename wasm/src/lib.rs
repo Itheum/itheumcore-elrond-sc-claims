@@ -14,10 +14,10 @@ elrond_wasm_node::wasm_endpoints! {
         pause
         removeClaim
         removeClaims
-        setRewardToken
+        setClaimToken
         unpause
         viewClaim
-        viewClaimAddDate
+        viewClaimModifyDate
         viewClaimWithDate
         viewClaims
         viewTokenIdentifier
