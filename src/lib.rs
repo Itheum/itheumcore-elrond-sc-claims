@@ -75,7 +75,7 @@ pub trait ClaimsContract:
         claims: MultiValueEncoded<MultiValue3<ManagedAddress, ClaimType, BigUint>>,
     ) {
         self.require_claim_token_is_set();
-        self.require_number_of_claims_in_bulk_is_valid(claims.len());
+        self.require_number_of_claims_in_bulk_is_valid(&claims.len());
         let (payment_amount, payment_token) = self.call_value().payment_token_pair();
         let timestamp = self.blockchain().get_block_timestamp();
         self.require_token_is_correct(payment_token);
@@ -129,7 +129,7 @@ pub trait ClaimsContract:
     ) {
         self.require_claim_token_is_set();
         //Panics if the user tries to add more than 200 claims per operation. Implemented in order to ensure
-        self.require_number_of_claims_in_bulk_is_valid(claims.len());
+        self.require_number_of_claims_in_bulk_is_valid(&claims.len());
         //Initialize the sum of claims to be removed to zero
         let mut sum_of_claims = BigUint::zero();
         let timestamp = self.blockchain().get_block_timestamp();
