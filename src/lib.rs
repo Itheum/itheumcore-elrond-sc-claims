@@ -85,6 +85,7 @@ pub trait ClaimsContract:
         //Iterate over the claims provided as argument and proceeds similarly to the add_claim endpoint for each one
         for item in claims.into_iter() {
             let (address, claim_type, amount) = item.into_tuple();
+            self.require_value_not_zero(&amount);
             let current_claim = self.claim(&address, &claim_type).get();
             self.claim(&address, &claim_type)
                 .set(current_claim + &amount);

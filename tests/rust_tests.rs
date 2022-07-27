@@ -97,6 +97,75 @@ fn deploy_test() {
         .assert_ok();
 }
 
+#[test] //Tests wether pausing and unpausing the contract works correctly
+fn pause_unpause_test() {
+    let mut setup = setup_contract(claims::contract_obj);
+    let b_wrapper = &mut setup.blockchain_wrapper;
+    let owner_address = &setup.owner_address;
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.is_paused().get(), false);
+        })
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.unpause();
+            },
+        )
+        .assert_user_error("Contract is already unpaused");
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.pause();
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.is_paused().get(), true);
+        })
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.pause();
+            },
+        )
+        .assert_user_error("Contract is already paused");
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.unpause();
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.is_paused().get(), false);
+        })
+        .assert_ok();
+}
+
 #[test] //Tests wether adding and removing singular claims works and also if removing returns an error if trying to remove more than the available claim
 fn add_and_remove_claim_test() {
     let mut setup = setup_contract(claims::contract_obj);
@@ -116,6 +185,40 @@ fn add_and_remove_claim_test() {
             },
         )
         .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.claim(&managed_address!(user_addr), &storage::ClaimType::Airdrop)
+                    .get(),
+                1_000_000
+            );
+        })
+        .assert_ok();
+
+    b_wrapper
+        .execute_esdt_transfer(
+            owner_address,
+            &setup.contract_wrapper,
+            TOKEN_ID,
+            0,
+            &rust_biguint!(0),
+            |sc| {
+                sc.add_claim(&managed_address!(user_addr), storage::ClaimType::Airdrop);
+            },
+        )
+        .assert_user_error("Operations must have non-zero value");
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.claim(&managed_address!(user_addr), &storage::ClaimType::Airdrop)
+                    .get(),
+                1_000_000
+            );
+        })
+        .assert_ok();
+
     b_wrapper
         .execute_esdt_transfer(
             owner_address,
@@ -132,6 +235,34 @@ fn add_and_remove_claim_test() {
             },
         )
         .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.claim(&managed_address!(user_addr), &storage::ClaimType::Airdrop)
+                    .get(),
+                500_000
+            );
+        })
+        .assert_ok();
+
+    b_wrapper
+        .execute_esdt_transfer(
+            owner_address,
+            &setup.contract_wrapper,
+            TOKEN_ID,
+            0,
+            &rust_biguint!(0),
+            |sc| {
+                sc.remove_claim(
+                    &managed_address!(user_addr),
+                    storage::ClaimType::Airdrop,
+                    managed_biguint!(0),
+                );
+            },
+        )
+        .assert_user_error("Operations must have non-zero value");
+
     b_wrapper
         .execute_esdt_transfer(
             owner_address,
@@ -148,6 +279,16 @@ fn add_and_remove_claim_test() {
             },
         )
         .assert_user_error("Cannot remove more than current claim");
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.claim(&managed_address!(user_addr), &storage::ClaimType::Airdrop)
+                    .get(),
+                500_000
+            );
+        })
+        .assert_ok();
 }
 
 #[test] //Same tests as the ones for singular claims, but for multiple claims + testing whether adding claims, but not sending enough tokens returns an error
@@ -187,6 +328,33 @@ fn add_and_remove_claims_test() {
             },
         )
         .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.claim(
+                    &managed_address!(first_user_addr),
+                    &storage::ClaimType::Airdrop
+                )
+                .get(),
+                1_000_000
+            );
+        })
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.claim(
+                    &managed_address!(second_user_addr),
+                    &storage::ClaimType::Allocation
+                )
+                .get(),
+                1_000_000
+            );
+        })
+        .assert_ok();
+
     b_wrapper
         .execute_esdt_transfer(
             owner_address,
@@ -216,6 +384,63 @@ fn add_and_remove_claims_test() {
             },
         )
         .assert_user_error("Claims added must equal payment amount");
+
+    b_wrapper
+        .execute_esdt_transfer(
+            owner_address,
+            &setup.contract_wrapper,
+            TOKEN_ID,
+            0,
+            &rust_biguint!(1_700_000),
+            |sc| {
+                let mut args = MultiValueEncoded::new();
+                args.push(MultiValue3(
+                    (
+                        managed_address!(first_user_addr),
+                        storage::ClaimType::Airdrop,
+                        managed_biguint!(1_700_000),
+                    )
+                        .into(),
+                ));
+                args.push(MultiValue3(
+                    (
+                        managed_address!(second_user_addr),
+                        storage::ClaimType::Allocation,
+                        managed_biguint!(0),
+                    )
+                        .into(),
+                ));
+                sc.add_claims(args);
+            },
+        )
+        .assert_user_error("Operations must have non-zero value");
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.claim(
+                    &managed_address!(first_user_addr),
+                    &storage::ClaimType::Airdrop
+                )
+                .get(),
+                1_000_000
+            );
+        })
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.claim(
+                    &managed_address!(second_user_addr),
+                    &storage::ClaimType::Allocation
+                )
+                .get(),
+                1_000_000
+            );
+        })
+        .assert_ok();
+
     b_wrapper
         .execute_esdt_transfer(
             owner_address,
@@ -229,7 +454,7 @@ fn add_and_remove_claims_test() {
                     (
                         managed_address!(first_user_addr),
                         storage::ClaimType::Airdrop,
-                        managed_biguint!(1_000_000),
+                        managed_biguint!(700_000),
                     )
                         .into(),
                 ));
@@ -245,6 +470,33 @@ fn add_and_remove_claims_test() {
             },
         )
         .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.claim(
+                    &managed_address!(first_user_addr),
+                    &storage::ClaimType::Airdrop
+                )
+                .get(),
+                300_000
+            );
+        })
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.claim(
+                    &managed_address!(second_user_addr),
+                    &storage::ClaimType::Allocation
+                )
+                .get(),
+                500_000
+            );
+        })
+        .assert_ok();
+
     b_wrapper
         .execute_esdt_transfer(
             owner_address,
@@ -258,7 +510,37 @@ fn add_and_remove_claims_test() {
                     (
                         managed_address!(first_user_addr),
                         storage::ClaimType::Airdrop,
-                        managed_biguint!(300_000),
+                        managed_biguint!(200_000),
+                    )
+                        .into(),
+                ));
+                args.push(MultiValue3(
+                    (
+                        managed_address!(second_user_addr),
+                        storage::ClaimType::Allocation,
+                        managed_biguint!(0),
+                    )
+                        .into(),
+                ));
+                sc.remove_claims(args);
+            },
+        )
+        .assert_user_error("Operations must have non-zero value");
+
+    b_wrapper
+        .execute_esdt_transfer(
+            owner_address,
+            &setup.contract_wrapper,
+            TOKEN_ID,
+            0,
+            &rust_biguint!(0),
+            |sc| {
+                let mut args = MultiValueEncoded::new();
+                args.push(MultiValue3(
+                    (
+                        managed_address!(first_user_addr),
+                        storage::ClaimType::Airdrop,
+                        managed_biguint!(400_000),
                     )
                         .into(),
                 ));
@@ -274,9 +556,35 @@ fn add_and_remove_claims_test() {
             },
         )
         .assert_user_error("Cannot remove more than current claim");
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.claim(
+                    &managed_address!(first_user_addr),
+                    &storage::ClaimType::Airdrop
+                )
+                .get(),
+                300_000
+            );
+        })
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.claim(
+                    &managed_address!(second_user_addr),
+                    &storage::ClaimType::Allocation
+                )
+                .get(),
+                500_000
+            );
+        })
+        .assert_ok();
 }
 
-#[test] //Tests whether the transaction to add a token fails in the case in which a different token than the reward token is sent
+#[test] //Tests whether the transaction to add a token fails in the case in which a different token than the claim token is sent
 fn add_claim_wrong_token_test() {
     let mut setup = setup_contract(claims::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
@@ -295,10 +603,85 @@ fn add_claim_wrong_token_test() {
             },
         )
         .assert_user_error("Can only add designated token");
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.claim(&managed_address!(user_addr), &storage::ClaimType::Airdrop)
+                    .get(),
+                0
+            );
+        })
+        .assert_ok();
 }
 
-#[test] //Tests whether one can set the reward token only once
-fn reset_reward_token_test() {
+#[test] //Tests whether the transaction to add tokens fails in the case in which a different token than the claim token is sent
+fn add_claims_wrong_token_test() {
+    let mut setup = setup_contract(claims::contract_obj);
+    let b_wrapper = &mut setup.blockchain_wrapper;
+    let owner_address = &setup.owner_address;
+    let first_user_addr = &setup.first_user_address;
+    let second_user_addr = &setup.second_user_address;
+
+    b_wrapper
+        .execute_esdt_transfer(
+            owner_address,
+            &setup.contract_wrapper,
+            WRONG_TOKEN_ID,
+            0,
+            &rust_biguint!(500_000),
+            |sc| {
+                let mut args = MultiValueEncoded::new();
+                args.push(MultiValue3(
+                    (
+                        managed_address!(first_user_addr),
+                        storage::ClaimType::Airdrop,
+                        managed_biguint!(200_000),
+                    )
+                        .into(),
+                ));
+                args.push(MultiValue3(
+                    (
+                        managed_address!(second_user_addr),
+                        storage::ClaimType::Allocation,
+                        managed_biguint!(300_000),
+                    )
+                        .into(),
+                ));
+                sc.add_claims(args);
+            },
+        )
+        .assert_user_error("Can only add designated token");
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.claim(
+                    &managed_address!(first_user_addr),
+                    &storage::ClaimType::Airdrop
+                )
+                .get(),
+                0
+            );
+        })
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.claim(
+                    &managed_address!(second_user_addr),
+                    &storage::ClaimType::Allocation
+                )
+                .get(),
+                0
+            );
+        })
+        .assert_ok();
+}
+
+#[test] //Tests whether one can set the claim token only once
+fn reset_claim_token_test() {
     let mut setup = setup_contract(claims::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
     let owner_address = &setup.owner_address;
@@ -312,7 +695,7 @@ fn reset_reward_token_test() {
                 sc.set_claim_token(managed_token_id!(TOKEN_ID));
             },
         )
-        .assert_user_error("Reward token is already set");
+        .assert_user_error("Claim token is already set");
 }
 
 #[test] //Tests whether claiming is impossible in pause state
@@ -379,6 +762,18 @@ fn harvest_claim_test() {
             },
         )
         .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.claim(&managed_address!(user_addr), &storage::ClaimType::Airdrop)
+                    .get(),
+                0
+            );
+        })
+        .assert_ok();
+
+    b_wrapper.check_esdt_balance(user_addr, TOKEN_ID, &rust_biguint!(1_000_000));
 }
 
 #[test] //Test wether the transaction to claim returns an error if no claims are present for the user for the type he tries to claim
@@ -413,6 +808,18 @@ fn harvest_wrong_claim_type_test() {
             },
         )
         .assert_user_error("Operations must have non-zero value");
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.claim(&managed_address!(user_addr), &storage::ClaimType::Airdrop)
+                    .get(),
+                1_000_000
+            );
+        })
+        .assert_ok();
+
+    b_wrapper.check_esdt_balance(user_addr, TOKEN_ID, &rust_biguint!(0));
 }
 
 #[test] //Tests whether claiming all claim types at once works
@@ -460,5 +867,26 @@ fn harvest_all_claims_test() {
             },
         )
         .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.claim(&managed_address!(user_addr), &storage::ClaimType::Airdrop)
+                    .get(),
+                0
+            );
+        })
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.claim(&managed_address!(user_addr), &storage::ClaimType::Reward)
+                    .get(),
+                0
+            );
+        })
+        .assert_ok();
+
     b_wrapper.check_esdt_balance(user_addr, TOKEN_ID, &rust_biguint!(2_000_000));
 }
