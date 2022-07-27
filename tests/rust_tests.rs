@@ -81,7 +81,7 @@ where
     }
 }
 
-#[test] //Tests whether the contrat is deployed and initialized after deployment correctly
+#[test] //Tests whether the contrat is deployed and initialized correctly after deployment
 fn deploy_test() {
     let mut setup = setup_contract(claims::contract_obj);
     setup
@@ -166,7 +166,9 @@ fn pause_unpause_test() {
         .assert_ok();
 }
 
-#[test] //Tests wether adding and removing singular claims works and also if removing returns an error if trying to remove more than the available claim
+#[test] //Tests wether adding and removing singular claims works as expected
+        //Tests if adding and removing a zero value claim returns an error
+        //Tests if removing more than the amount reserved in claims returns an error
 fn add_and_remove_claim_test() {
     let mut setup = setup_contract(claims::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
@@ -291,7 +293,10 @@ fn add_and_remove_claim_test() {
         .assert_ok();
 }
 
-#[test] //Same tests as the ones for singular claims, but for multiple claims + testing whether adding claims, but not sending enough tokens returns an error
+#[test] //Same tests as the ones for singular claims, but for multiple claims
+        //Tests if adding multiple claims, but not sending the right amount of tokens for it returns an error
+        //Tests if adding or removing zero valued claims returns an error
+        //Tests if removing more than the amount reserved in claims returns an error
 fn add_and_remove_claims_test() {
     let mut setup = setup_contract(claims::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
@@ -815,6 +820,16 @@ fn harvest_wrong_claim_type_test() {
                 sc.claim(&managed_address!(user_addr), &storage::ClaimType::Airdrop)
                     .get(),
                 1_000_000
+            );
+        })
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.claim(&managed_address!(user_addr), &storage::ClaimType::Reward)
+                    .get(),
+                0
             );
         })
         .assert_ok();
