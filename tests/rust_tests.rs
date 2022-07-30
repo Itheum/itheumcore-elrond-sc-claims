@@ -396,6 +396,30 @@ fn add_and_remove_claims_test() {
             &setup.contract_wrapper,
             TOKEN_ID,
             0,
+            &rust_biguint!(201_000),
+            |sc| {
+                let mut args = MultiValueEncoded::new();
+                for _i in 0..201 {
+                    args.push(MultiValue3(
+                        (
+                            managed_address!(first_user_addr),
+                            storage::ClaimType::Airdrop,
+                            managed_biguint!(1_000),
+                        )
+                            .into(),
+                    ));
+                }
+                sc.add_claims(args);
+            },
+        )
+        .assert_user_error("Exceeded maximum number of claims per operation (200)");
+
+    b_wrapper
+        .execute_esdt_transfer(
+            owner_address,
+            &setup.contract_wrapper,
+            TOKEN_ID,
+            0,
             &rust_biguint!(1_700_000),
             |sc| {
                 let mut args = MultiValueEncoded::new();
@@ -561,6 +585,30 @@ fn add_and_remove_claims_test() {
             },
         )
         .assert_user_error("Cannot remove more than current claim");
+
+    b_wrapper
+        .execute_esdt_transfer(
+            owner_address,
+            &setup.contract_wrapper,
+            TOKEN_ID,
+            0,
+            &rust_biguint!(0),
+            |sc| {
+                let mut args = MultiValueEncoded::new();
+                for _i in 0..201 {
+                    args.push(MultiValue3(
+                        (
+                            managed_address!(first_user_addr),
+                            storage::ClaimType::Airdrop,
+                            managed_biguint!(1_000),
+                        )
+                            .into(),
+                    ));
+                }
+                sc.remove_claims(args);
+            },
+        )
+        .assert_user_error("Exceeded maximum number of claims per operation (200)");
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
