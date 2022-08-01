@@ -183,7 +183,7 @@ Note: In order to run the tests, one has to use the rust nightly version. One ca
 
 ### How to deploy
 
-In order to deploy the smart contract on devnet one can use the interaction snippets present in the devnet.snippets file (which is located in the interactions folder). To run the functions from the interaction file, one can use:
+In order to deploy the smart contract on devnet one can use the interaction snippets present in the devnet.snippets file (which is located in the interactions folder). Before using the snippets, make sure to add your pem file in the root of the project under the name "wallet.pem" (or change the name to whichever one you wish to use in the interaction snippets). If you need info about how to derive a pem file you can find them [here](https://docs.elrond.com/sdk-and-tools/erdpy/deriving-the-wallet-pem-file/). To run the functions from the interaction file, one can use:
 
 ```shell
     source interaction/devnet.snippets.sh
