@@ -36,4 +36,8 @@ pub trait StorageModule {
     #[view(isPaused)]
     #[storage_mapper("isPaused")]
     fn is_paused(&self) -> SingleValueMapper<bool>;
+
+    #[view(viewPrivilegedAddresses)]
+    #[storage_mapper("privilegedAddresses")]
+    fn privileged_addresses(&self) -> SetMapper<ManagedAddress>;
 }

@@ -3,7 +3,6 @@ CHAIN_ID="D"
 
 WALLET="./wallet.pem"
 
-MY_ADDRESS="erd130qhxzu6lh29g6srnsa65pplxaf9sgsspczvljvxk624upwt7yqstswx9l"
 ADDRESS=$(erdpy data load --key=address-devnet)
 DEPLOY_TRANSACTION=$(erdpy data load --key=deployTransaction-devnet)
 
@@ -59,6 +58,36 @@ unpause(){
     --pem=${WALLET} \
     --gas-limit=6000000 \
     --function "unpause" \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
+addPrivilegedAddress(){
+    # $1 = address to which to give privileges
+
+    address="0x$(erdpy wallet bech32 --decode ${2})"
+    erdpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=10000000 \
+    --function "addPrivilegedAddress" \
+    --arguments $address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
+removePrivilegedAddress(){
+    # $1 = address to which to remove privileges
+
+    address="0x$(erdpy wallet bech32 --decode ${2})"
+    erdpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=10000000 \
+    --function "removePrivilegedAddress" \
+    --arguments $address \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --send || return

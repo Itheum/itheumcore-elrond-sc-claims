@@ -49,20 +49,9 @@ The init function is called when deploying or upgrading the smart contract. It r
 
 Endpoint that sets the claims token. It can only be used once and it can only be called by the owner of the contract.
 Call structure: "setRewardToken" + "@" + TokenIdentifier hex encoded
-Example: “setRewardToken@49544845554d2d613631333137”
+Example: "setRewardToken@49544845554d2d613631333137"
 
 ### Only owner endpoints
-
-#### pause
-
-```rust
-    #[endpoint(pause)]
-    fn pause(&self);
-```
-
-Endpoint that pauses the claims harvesting from the smart contract.
-Call structure: "pause"
-Example: "pause"
 
 #### unpause
 
@@ -74,6 +63,75 @@ Example: "pause"
 Endpoint that unpauses the claims harvesting from the smart contract.
 Call structure: "unpause"
 Example: "unpause"
+
+#### addPrivilegedAddress
+
+```rust
+    #[endpoint(addPrivilegedAddress)]
+    fn add_privileged_address(&self,
+        address: ManagedAddress
+    );
+```
+
+Endpoint that gives an address privileges to add claims or pause the contract. The contract can only store up to two privileged addresses at a time.
+Call structure: "addPrivilegedAddress" + "@" + Address hex encoded
+Example: "addPrivilegedAddress@8bc1730b9afdd4546a039c3baa043f37525822100e04cfc986b6955e05cbf101"
+
+#### removePrivilegedAddress
+
+```rust
+    #[endpoint(removePrivilegedAddress)]
+    fn remove_privileged_address(&self,
+        address: ManagedAddress
+    );
+```
+
+Endpoint that removes privileges of an already privileged address.
+Call structure: "removePrivilegedAddress" + "@" + Address hex encoded
+Example: "removePrivilegedAddress@8bc1730b9afdd4546a039c3baa043f37525822100e04cfc986b6955e05cbf101"
+
+#### removeClaim
+
+```rust
+    #[endpoint(removeClaim)]
+    fn remove_claim(&self,
+        address: &ManagedAddress,
+        claim_type: ClaimType,
+        amount: BigUint
+    );
+```
+
+Endpoint that allows the owner of the smart contract to remove a claim from the smart contract. Receives an address, the claim type and the amount of tokens to remove as arguments.
+Call structure: "removeClaim" + "@" +address hex encoded + "@" + claim type hex encoded + "@" + amount to remove hex encoded
+Example: "removeClaim@8bc1730b9afdd4546a039c3baa043f37525822100e04cfc986b6955e05cbf101@01@8ac7230489e80000"
+
+#### removeClaims
+
+```rust
+    #[endpoint(removeClaims)]
+    fn remove_claims(&self,
+        claims: MultiValueEncoded<MultiValue3<ManagedAddress, ClaimType, BigUint>>,
+    );
+```
+
+Similar to the removeClaim endpoint, but it allows the owner to remove multiple claims from the smart contract through a single transaction. Receives a list of claims as arguments.
+Call structure: "removeClaims" + "@" + address hex encoded + "@" + claim type hex encoded + "@" + amount to remove hex encoded (but can add as many pairs as needed)
+Example: "removeClaims@8bc1730b9afdd4546a039c3baa043f37525822100e04cfc986b6955e05cbf101@01@8ac7230489e80000"
+
+### Priviledged address endpoints
+
+These endpoints are endpoints that are callable by both the owner of the Smart Contract and up to two other addresses designated by the owner to have extra privileges.
+
+#### pause
+
+```rust
+    #[endpoint(pause)]
+    fn pause(&self);
+```
+
+Endpoint that pauses the claims harvesting from the smart contract.
+Call structure: "pause"
+Example: "pause"
 
 #### addClaim
 
@@ -103,34 +161,6 @@ Example: "ESDTTransfer@49544845554d2d613631333137@8ac7230489e80000@616464436c616
 Similar to the addClaim endpoint, but it allows the owner to add multiple claims to the smart contract through a single transaction. Receives a list of claims as arguments.
 Call structure: "ESDTTransfer" + "@" + TokenIdentifier hex encoded + "@" + total amounts of tokens added to claims hex encoded + "@" + "addClaims" hex encoded + "@" + address hex encoded + "@" + claim type hex encoded + "@" + amount for this address hex encoded (but can add as many address/claim type/amount pairs as needed)
 Example: "ESDTTransfer@49544845554d2d613631333137@8ac7230489e80000@616464436c61696d73@8bc1730b9afdd4546a039c3baa043f37525822100e04cfc986b6955e05cbf101@00@8ac7230489e80000"
-
-#### removeClaim
-
-```rust
-    #[endpoint(removeClaim)]
-    fn remove_claim(&self,
-        address: &ManagedAddress,
-        claim_type: ClaimType,
-        amount: BigUint
-    );
-```
-
-Endpoint that allows the owner of the smart contract to remove a claim from the smart contract. Receives an address, the claim type and the amount of tokens to remove as arguments.
-Call structure: "removeClaim" + "@" +address hex encoded + "@" + claim type hex encoded + "@" + amount to remove hex encoded
-Example: "removeClaim@8bc1730b9afdd4546a039c3baa043f37525822100e04cfc986b6955e05cbf101@01@8ac7230489e80000"
-
-#### removeClaims
-
-```rust
-    #[endpoint(removeClaims)]
-    fn remove_claims(&self,
-        claims: MultiValueEncoded<MultiValue3<ManagedAddress, ClaimType, BigUint>>,
-    );
-```
-
-Similar to the removeClaim endpoint, but it allows the owner to remove multiple claims from the smart contract through a single transaction. Receives a list of claims as arguments.
-Call structure: "removeClaims" + "@" + address hex encoded + "@" + claim type hex encoded + "@" + amount to remove hex encoded (but can add as many pairs as needed)
-Example: "removeClaims@8bc1730b9afdd4546a039c3baa043f37525822100e04cfc986b6955e05cbf101@01@8ac7230489e80000"
 
 ### Public endpoints
 

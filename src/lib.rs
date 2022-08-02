@@ -31,12 +31,14 @@ pub trait ClaimsContract:
         self.claim_token().set(&token);
     }
 
-    //Endpoint available for the owner of the smart contract to pause claim harvesting. Cannot be called while harvesting is already paused.
-    #[only_owner]
+    //Endpoint available for privileged addresses of the smart contract to pause claim harvesting. Cannot be called while harvesting is already paused.
     #[endpoint(pause)]
     fn pause(&self) {
         require!(!self.is_paused().get(), "Contract is already paused");
+        let caller = self.blockchain().get_caller();
+        self.require_address_is_privileged(&caller);
         self.is_paused().set(true);
+        self.harvest_paused_event(&caller);
     }
 
     //Endpoint avbailable for the owner of the smart contract to resume claim harvesting. Cannot be called while harvesting is already unpaused.
@@ -45,14 +47,51 @@ pub trait ClaimsContract:
     fn unpause(&self) {
         require!(self.is_paused().get(), "Contract is already unpaused");
         self.is_paused().set(false);
+        self.harvest_unpaused_event();
     }
 
-    //Endpoint available for the owner of the smart contract to add a claim of a specific claim type for a specific address.
+    //Endpoint available for owner in order to add an address to the list of privileged addresses
     #[only_owner]
+    #[endpoint(addPrivilegedAddress)]
+    fn add_privileged_address(&self, address: ManagedAddress) {
+        let owner = self.blockchain().get_owner_address();
+        require!(
+            owner != address,
+            "Owner cannot be added to priviledged addresses"
+        );
+        let privileged_addresses = self.privileged_addresses();
+        require!(
+            !privileged_addresses.contains(&address),
+            "Address is already privileged"
+        );
+        require!(
+            privileged_addresses.len() < 2usize,
+            "Maximum number of priviledged addresses reached"
+        );
+        self.privileged_address_added_event(&address);
+        self.privileged_addresses().insert(address);
+    }
+
+    //Endpoint available for owner in order to remove an address from the list of privileged addresses
+    #[only_owner]
+    #[endpoint(removePrivilegedAddress)]
+    fn remove_privileged_address(&self, address: ManagedAddress) {
+        let privileged_addresses = self.privileged_addresses();
+        require!(
+            privileged_addresses.contains(&address),
+            "Address is not privileged"
+        );
+        self.privileged_address_removed_event(&address);
+        self.privileged_addresses().remove(&address);
+    }
+
+    //Endpoint available for privileged addresses of the smart contract to add a claim of a specific claim type for a specific address.
     #[payable("*")]
     #[endpoint(addClaim)]
     fn add_claim(&self, address: &ManagedAddress, claim_type: ClaimType) {
         self.require_claim_token_is_set();
+        let caller = self.blockchain().get_caller();
+        self.require_address_is_privileged(&caller);
         let (payment_amount, payment_token) = self.call_value().payment_token_pair();
         let current_claim = self.claim(address, &claim_type).get();
         let timestamp = self.blockchain().get_block_timestamp();
@@ -63,11 +102,10 @@ pub trait ClaimsContract:
             .set(current_claim + &payment_amount);
         //Update the last modification date of the claim to the current timestamp
         self.claim_modify_date(address, &claim_type).set(timestamp);
-        self.claim_added_event(address, &claim_type, &payment_amount);
+        self.claim_added_event(&caller, &address, &claim_type, &payment_amount);
     }
 
-    //Endpoint available for the owner of the smart contract to add a bulk of claims of different claim types for different specific addresses.
-    #[only_owner]
+    //Endpoint available for privileged addresses of the smart contract to add a bulk of claims of different claim types for different specific addresses.
     #[payable("*")]
     #[endpoint(addClaims)]
     fn add_claims(
@@ -76,6 +114,8 @@ pub trait ClaimsContract:
     ) {
         self.require_claim_token_is_set();
         self.require_number_of_claims_in_bulk_is_valid(&claims.len());
+        let caller = self.blockchain().get_caller();
+        self.require_address_is_privileged(&caller);
         let (payment_amount, payment_token) = self.call_value().payment_token_pair();
         let timestamp = self.blockchain().get_block_timestamp();
         self.require_token_is_correct(payment_token);
@@ -91,7 +131,7 @@ pub trait ClaimsContract:
                 .set(current_claim + &amount);
             self.claim_modify_date(&address, &claim_type).set(timestamp);
             sum_of_claims += &amount;
-            self.claim_added_event(&address, &claim_type, &amount);
+            self.claim_added_event(&caller, &address, &claim_type, &amount);
         }
         //Panic if the amount of tokens sent by the owner to the endpoint are not equal to the sum of the claims added to the contract
         require!(
@@ -116,7 +156,7 @@ pub trait ClaimsContract:
             .set(current_claim - &amount);
         //Update the modification date of the claim to the current timestamp
         self.claim_modify_date(address, &claim_type).set(timestamp);
-        self.claim_removed_event(address, &claim_type, &amount);
+        self.claim_removed_event(&address, &claim_type, &amount);
         //Send the removed tokens from the claim back to the owner of the smart contract
         self.send().direct(&owner, &claim_token, 0, &amount, &[]);
     }

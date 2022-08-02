@@ -40,4 +40,13 @@ pub trait RequirementsModule: crate::storage::StorageModule {
             "Exceeded maximum number of claims per operation (200)"
         );
     }
+
+    //Checks whether the address has the special rights needed in case of some special operations
+    fn require_address_is_privileged(&self, address: &ManagedAddress) {
+        require!(
+            self.privileged_addresses().contains(address)
+                || &self.blockchain().get_owner_address() == address,
+            "Address doesn't have the privilege to use this operation"
+        );
+    }
 }
