@@ -253,16 +253,6 @@ fn add_and_remove_privileged_addresses_test() {
             &setup.contract_wrapper,
             &rust_biguint!(0),
             |sc| {
-                sc.add_privileged_address(managed_address!(owner_address));
-            },
-        )
-        .assert_user_error("Owner cannot be added to priviledged addresses");
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| {
                 sc.add_privileged_address(managed_address!(third_user_addr));
             },
         )
@@ -299,6 +289,16 @@ fn add_and_remove_privileged_addresses_test() {
             },
         )
         .assert_ok();
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.add_privileged_address(managed_address!(owner_address));
+            },
+        )
+        .assert_user_error("Owner cannot be added to priviledged addresses");
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             assert_eq!(
