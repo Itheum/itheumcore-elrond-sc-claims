@@ -54,11 +54,6 @@ pub trait ClaimsContract:
     #[only_owner]
     #[endpoint(addPrivilegedAddress)]
     fn add_privileged_address(&self, address: ManagedAddress) {
-        let owner = self.blockchain().get_owner_address();
-        require!(
-            owner != address,
-            "Owner cannot be added to priviledged addresses"
-        );
         let privileged_addresses = self.privileged_addresses();
         require!(
             !privileged_addresses.contains(&address),
@@ -67,6 +62,11 @@ pub trait ClaimsContract:
         require!(
             privileged_addresses.len() < 2usize,
             "Maximum number of priviledged addresses reached"
+        );
+        let owner = self.blockchain().get_owner_address();
+        require!(
+            owner != address,
+            "Owner cannot be added to priviledged addresses"
         );
         self.privileged_address_added_event(&address);
         self.privileged_addresses().insert(address);
@@ -90,13 +90,13 @@ pub trait ClaimsContract:
     #[endpoint(addClaim)]
     fn add_claim(&self, address: &ManagedAddress, claim_type: ClaimType) {
         self.require_claim_token_is_set();
-        let caller = self.blockchain().get_caller();
-        self.require_address_is_privileged(&caller);
         let (payment_amount, payment_token) = self.call_value().payment_token_pair();
-        let current_claim = self.claim(address, &claim_type).get();
-        let timestamp = self.blockchain().get_block_timestamp();
         self.require_token_is_correct(payment_token);
         self.require_value_not_zero(&payment_amount);
+        let caller = self.blockchain().get_caller();
+        self.require_address_is_privileged(&caller);
+        let current_claim = self.claim(address, &claim_type).get();
+        let timestamp = self.blockchain().get_block_timestamp();
         //Add the amount of the tokens sent to the current claim reservation
         self.claim(address, &claim_type)
             .set(current_claim + &payment_amount);
@@ -114,12 +114,12 @@ pub trait ClaimsContract:
     ) {
         self.require_claim_token_is_set();
         self.require_number_of_claims_in_bulk_is_valid(&claims.len());
-        let caller = self.blockchain().get_caller();
-        self.require_address_is_privileged(&caller);
         let (payment_amount, payment_token) = self.call_value().payment_token_pair();
-        let timestamp = self.blockchain().get_block_timestamp();
         self.require_token_is_correct(payment_token);
         self.require_value_not_zero(&payment_amount);
+        let caller = self.blockchain().get_caller();
+        self.require_address_is_privileged(&caller);
+        let timestamp = self.blockchain().get_block_timestamp();
         //Initialize the sum of claims to be added to zero
         let mut sum_of_claims = BigUint::zero();
         //Iterate over the claims provided as argument and proceeds similarly to the add_claim endpoint for each one
@@ -145,12 +145,12 @@ pub trait ClaimsContract:
     #[endpoint(removeClaim)]
     fn remove_claim(&self, address: &ManagedAddress, claim_type: ClaimType, amount: BigUint) {
         self.require_claim_token_is_set();
+        self.require_value_not_zero(&amount);
         let current_claim = self.claim(address, &claim_type).get();
+        self.require_remove_claim_is_valid(&current_claim, &amount);
         let owner = self.blockchain().get_owner_address();
         let claim_token = self.claim_token().get();
         let timestamp = self.blockchain().get_block_timestamp();
-        self.require_value_not_zero(&amount);
-        self.require_remove_claim_is_valid(&current_claim, &amount);
         //Remove the amount of tokens given as argument from the current claim reservation
         self.claim(address, &claim_type)
             .set(current_claim - &amount);
@@ -177,10 +177,10 @@ pub trait ClaimsContract:
         //Iterate over the claims provided as argument and proceeds similarly to the remove_claim endpoint for each one
         for item in claims.into_iter() {
             let (address, claim_type, amount) = item.into_tuple();
-            let current_claim = self.claim(&address, &claim_type).get();
-            self.claim_modify_date(&address, &claim_type).set(timestamp);
             self.require_value_not_zero(&amount);
+            let current_claim = self.claim(&address, &claim_type).get();
             self.require_remove_claim_is_valid(&current_claim, &amount);
+            self.claim_modify_date(&address, &claim_type).set(timestamp);
             sum_of_claims += &amount;
             self.claim(&address, &claim_type)
                 .set(current_claim - &amount);
