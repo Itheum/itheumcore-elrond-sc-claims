@@ -881,6 +881,7 @@ fn add_claims_privileged_test() {
         )
         .assert_user_error("Address doesn't have the privilege to use this operation");
 }
+
 #[test] //Tests whether the transaction to add a token fails in the case in which a different token than the claim token is sent
 fn add_claim_wrong_token_test() {
     let mut setup = setup_contract(claims::contract_obj);

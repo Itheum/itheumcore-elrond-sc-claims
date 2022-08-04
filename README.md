@@ -48,8 +48,8 @@ The init function is called when deploying or upgrading the smart contract. It r
 ```
 
 Endpoint that sets the claims token. It can only be used once and it can only be called by the owner of the contract.
-Call structure: "setRewardToken" + "@" + TokenIdentifier hex encoded
-Example: "setRewardToken@49544845554d2d613631333137"
+Call structure: "setClaimToken" + "@" + TokenIdentifier hex encoded
+Example: "setClaimToken@49544845554d2d613631333137"
 
 ### Only owner endpoints
 
