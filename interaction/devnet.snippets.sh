@@ -13,7 +13,7 @@ deploy(){
     erdpy --verbose contract deploy \
     --bytecode output/claims.wasm \
     --outfile deployOutput \
-    --metadata-payable \
+    --metadata-not-readable \
     --pem wallet.pem \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
@@ -66,7 +66,7 @@ unpause(){
 addPrivilegedAddress(){
     # $1 = address to which to give privileges
 
-    address="0x$(erdpy wallet bech32 --decode ${2})"
+    address="0x$(erdpy wallet bech32 --decode ${1})"
     erdpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
@@ -81,7 +81,7 @@ addPrivilegedAddress(){
 removePrivilegedAddress(){
     # $1 = address to which to remove privileges
 
-    address="0x$(erdpy wallet bech32 --decode ${2})"
+    address="0x$(erdpy wallet bech32 --decode ${1})"
     erdpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
