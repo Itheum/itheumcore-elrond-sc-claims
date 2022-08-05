@@ -9,16 +9,20 @@ elrond_wasm_node::wasm_endpoints! {
     (
         addClaim
         addClaims
+        addPrivilegedAddress
         claim
         isPaused
         pause
         removeClaim
         removeClaims
-        setRewardToken
+        removePrivilegedAddress
+        setClaimToken
+        unpause
         viewClaim
-        viewClaimAddDate
+        viewClaimModifyDate
         viewClaimWithDate
         viewClaims
+        viewPrivilegedAddresses
         viewTokenIdentifier
     )
 }

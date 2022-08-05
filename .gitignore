@@ -5,7 +5,10 @@
 
 # The erdpy output
 output*
+deployOutput
 
 wallets/
 commands.txt
 wallet.pem
+erdpy.data-storage.json
+deploy-devnet.interaction.json
