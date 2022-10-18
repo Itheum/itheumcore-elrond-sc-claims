@@ -14,7 +14,7 @@ deploy(){
     --bytecode output/claims.wasm \
     --outfile deployOutput \
     --metadata-not-readable \
-    --pem wallet.pem \
+    --pem ${WALLET} \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --gas-limit 150000000 \

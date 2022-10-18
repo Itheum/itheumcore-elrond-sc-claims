@@ -18,7 +18,7 @@ Understanding this document is also easier if one knows how [ESDT token transact
 
 | Devnet                                                         | Mainnet          |
 | -------------------------------------------------------------- | ---------------- |
-| erd1qqqqqqqqqqqqqpgqtywnp7z0war94rpzk00p2n2wjwaws2xr7yqsejxy7f | Not deployed yet |
+| erd1qqqqqqqqqqqqqpgqtywnp7z0war94rpzk00p2n2wjwaws2xr7yqsejxy7f (V1) : (V2) | erd1qqqqqqqqqqqqqpgqnsmrn5q08eqth3fy8el87sgdj0mkhwdwl2jqnf59cg |
 
 ## Endpoints
 
