@@ -1,5 +1,5 @@
-elrond_wasm::imports!();
-elrond_wasm::derive_imports!();
+multiversx_sc::imports!();
+multiversx_sc::derive_imports!();
 
 use crate::storage::ClaimType;
 
@@ -11,7 +11,7 @@ pub struct Claim<M: ManagedTypeApi> {
 }
 
 //Module that implements views, by which we understand read-only endpoints
-#[elrond_wasm::module]
+#[multiversx_sc::module]
 pub trait ViewsModule: crate::storage::StorageModule {
     //View that returns the sum of all claims, from all claim types, for a given address
     #[view(viewClaims)]

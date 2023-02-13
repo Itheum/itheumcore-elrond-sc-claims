@@ -1,14 +1,12 @@
 use claims::storage::StorageModule;
 use claims::*;
-use elrond_wasm::{
-    elrond_codec::multi_types::{MultiValue3, OptionalValue},
+use multiversx_sc::{
+    codec::multi_types::{MultiValue3, OptionalValue},
     types::{Address, MultiValueEncoded},
 };
+use multiversx_sc_scenario::testing_framework::{BlockchainStateWrapper, ContractObjWrapper};
+use multiversx_sc_scenario::*;
 
-use elrond_wasm_debug::{
-    managed_address, managed_biguint, managed_token_id, rust_biguint, testing_framework::*,
-    DebugApi,
-};
 pub const WASM_PATH: &'static str = "../output/claims.wasm";
 pub const TOKEN_ID: &[u8] = b"ITHEUM-df6f26";
 pub const WRONG_TOKEN_ID: &[u8] = b"WRONG-123456";
