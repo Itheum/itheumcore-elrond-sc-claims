@@ -1,15 +1,13 @@
 [package]
 name = "claims"
 version = "0.1.0"
-authors = [ "Ovidiu Damian - Itheum" ]
+authors = ["Ovidiu Damian - Itheum"]
 edition = "2021"
 publish = false
 
 [lib]
 path = "src/lib.rs"
-
 [dependencies.multiversx-sc]
-version = "0.39.4"
-
+version = "0.39.5"
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.39.4"
+version = "0.39.5"

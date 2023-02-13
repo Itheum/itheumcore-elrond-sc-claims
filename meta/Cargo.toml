@@ -3,15 +3,14 @@ name = "claims-meta"
 version = "0.1.0"
 edition = "2021"
 publish = false
-authors = [ "Ovidiu Damian - Itheum" ]
+authors = ["Ovidiu Damian - Itheum"]
 
 [dev-dependencies]
-
 [dependencies.claims]
 path = ".."
 
 [dependencies.multiversx-sc]
-version = "0.39.4"
+version = "0.39.5"
 
 [dependencies.multiversx-sc-meta]
-version = "0.39.4"
+version = "0.39.5"
