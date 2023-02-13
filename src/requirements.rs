@@ -1,8 +1,8 @@
-elrond_wasm::imports!();
-elrond_wasm::derive_imports!();
+multiversx_sc::imports!();
+multiversx_sc::derive_imports!();
 
 //Module that handles generic (commonly used, which are not specific to one function) requirements which should stop execution and rollback if not met
-#[elrond_wasm::module]
+#[multiversx_sc::module]
 pub trait RequirementsModule: crate::storage::StorageModule {
     // Checks whether the owner of the smart contract designated a token to be used by the smart contract for all the claims
     fn require_claim_token_is_set(&self) {

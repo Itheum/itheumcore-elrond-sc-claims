@@ -1,9 +1,9 @@
 [package]
 name = "claims-wasm"
-version = "0.0.0"
-edition = "2018"
+version = "0.1.0"
+edition = "2021"
 publish = false
-authors = [ "you",]
+authors = [ "Ovidiu Damian - Itheum" ]
 
 [lib]
 crate-type = [ "cdylib",]
@@ -23,9 +23,5 @@ panic = "abort"
 [dependencies.claims]
 path = ".."
 
-[dependencies.elrond-wasm-node]
-version = "0.31.1"
-
-[dependencies.elrond-wasm-output]
-version = "0.31.1"
-features = [ "wasm-output-mode",]
+[dependencies.multiversx-sc-wasm-adapter]
+version = "0.39.4"

@@ -1,7 +1,7 @@
 #![no_std]
-#![feature(generic_associated_types)]
 
-elrond_wasm::imports!();
+multiversx_sc::imports!();
+multiversx_sc::derive_imports!();
 
 use crate::storage::ClaimType;
 
@@ -10,7 +10,7 @@ pub mod requirements;
 pub mod storage;
 pub mod views;
 
-#[elrond_wasm::contract]
+#[multiversx_sc::contract]
 pub trait ClaimsContract:
     storage::StorageModule
     + events::EventsModule
@@ -90,7 +90,7 @@ pub trait ClaimsContract:
     #[endpoint(addClaim)]
     fn add_claim(&self, address: &ManagedAddress, claim_type: ClaimType) {
         self.require_claim_token_is_set();
-        let (payment_amount, payment_token) = self.call_value().payment_token_pair();
+        let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
         self.require_token_is_correct(payment_token);
         self.require_value_not_zero(&payment_amount);
         let caller = self.blockchain().get_caller();
@@ -114,7 +114,7 @@ pub trait ClaimsContract:
     ) {
         self.require_claim_token_is_set();
         self.require_number_of_claims_in_bulk_is_valid(&claims.len());
-        let (payment_amount, payment_token) = self.call_value().payment_token_pair();
+        let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
         self.require_token_is_correct(payment_token);
         self.require_value_not_zero(&payment_amount);
         let caller = self.blockchain().get_caller();
@@ -158,7 +158,7 @@ pub trait ClaimsContract:
         self.claim_modify_date(address, &claim_type).set(timestamp);
         self.claim_removed_event(&address, &claim_type, &amount);
         //Send the removed tokens from the claim back to the owner of the smart contract
-        self.send().direct(&owner, &claim_token, 0, &amount, &[]);
+        self.send().direct_esdt(&owner, &claim_token, 0, &amount);
     }
 
     //Endpoint available for the owner of the smart contract to remove a bulk of claims of different claim types for different specific addresses.
@@ -190,7 +190,7 @@ pub trait ClaimsContract:
         let claim_token = self.claim_token().get();
         //Send the removed tokens from the claim back to the owner of the smart contract
         self.send()
-            .direct(&owner, &claim_token, 0, &sum_of_claims, &[]);
+            .direct_esdt(&owner, &claim_token, 0, &sum_of_claims);
     }
 
     //Endpoint available for the public to claim tokens reserved for the calling address. Cannot be called while contract is paused for the public/(harvesting is paused).
@@ -244,6 +244,6 @@ pub trait ClaimsContract:
             self.require_value_not_zero(&claim);
         }
         //Send the amount of tokens harvested (all tokens of a given claim type or the sum for all claim types) to the calling address.
-        self.send().direct(&caller, &claim_token, 0, &claim, &[]);
+        self.send().direct_esdt(&caller, &claim_token, 0, &claim);
     }
 }

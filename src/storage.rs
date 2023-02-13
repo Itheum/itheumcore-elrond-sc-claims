@@ -1,5 +1,5 @@
-elrond_wasm::imports!();
-elrond_wasm::derive_imports!();
+multiversx_sc::imports!();
+multiversx_sc::derive_imports!();
 
 // Enumeration used to define claim types and increase readability of the code
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, PartialEq, Clone, Debug, TypeAbi)]
@@ -10,7 +10,7 @@ pub enum ClaimType {
 }
 
 // Module that handles the common storage of the smart contract
-#[elrond_wasm::module]
+#[multiversx_sc::module]
 pub trait StorageModule {
     // Stores the token identifier of the token that is used for claims in the smart contract
     #[view(viewTokenIdentifier)]

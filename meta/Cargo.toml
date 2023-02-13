@@ -1,14 +1,17 @@
 [package]
 name = "claims-meta"
-version = "0.0.0"
-edition = "2018"
+version = "0.1.0"
+edition = "2021"
 publish = false
-authors = [ "you",]
+authors = [ "Ovidiu Damian - Itheum" ]
 
 [dev-dependencies]
 
 [dependencies.claims]
 path = ".."
 
-[dependencies.elrond-wasm-debug]
-version = "0.31.1"
+[dependencies.multiversx-sc]
+version = "0.39.4"
+
+[dependencies.multiversx-sc-meta]
+version = "0.39.4"
