@@ -1,7 +1,7 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-use crate::storage::{self};
+use crate::storage::{self, ClaimType};
 
 // Module that handles generic (commonly used, which are not specific to one function) requirements which should stop execution and rollback if not met
 #[multiversx_sc::module]
@@ -48,6 +48,24 @@ pub trait RequirementsModule: storage::StorageModule {
         require!(
             self.privileged_addresses().contains(address)
                 || &self.blockchain().get_owner_address() == address,
+            "Address doesn't have the privilege to use this operation"
+        );
+    }
+
+    // Checks whether the a given claim type is valid for Data NFT Marketplace Contract calls
+    fn require_claim_type_is_valid_marketplace(&self, claim_type: &ClaimType) {
+        require!(claim_type == &ClaimType::Royalties);
+    }
+
+    // Checks whether the a given claim type is valid for non Data NFT Marketplace Contract calls
+    fn require_claim_type_is_valid_non_marketplace(&self, claim_type: &ClaimType) {
+        require!(claim_type != &ClaimType::Royalties,);
+    }
+
+    // Checks whether the address has the Data NFTR Marketplace Special Rights
+    fn require_address_is_marketplace(&self, address: &ManagedAddress) {
+        require!(
+            &self.data_nft_marketplace_address().get() == address,
             "Address doesn't have the privilege to use this operation"
         );
     }

@@ -11,7 +11,7 @@ pub enum ClaimType {
 }
 
 // Trait used to define the maximum value of the ClaimType enumeration
-trait Max {
+pub trait Max {
     fn max() -> u8;
 }
 

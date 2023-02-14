@@ -3,12 +3,11 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-use crate::storage::ClaimType;
+use crate::storage::{ClaimType, Max};
 
 pub mod events;
 pub mod requirements;
 pub mod storage;
-pub mod utils;
 pub mod views;
 
 #[multiversx_sc::contract]
@@ -17,7 +16,6 @@ pub trait ClaimsContract:
     + events::EventsModule
     + views::ViewsModule
     + requirements::RequirementsModule
-    + utils::UtilsModule
 {
     // When the smart contract is deployed claim harvesting is paused
     #[init]
@@ -95,6 +93,7 @@ pub trait ClaimsContract:
     #[endpoint(setDataNftMarketplaceAddress)]
     fn set_data_nft_marketplace_address(&self, address: ManagedAddress) {
         self.data_nft_marketplace_address().set(&address);
+        self.data_nft_marketplace_address_set_event(&address);
     }
 
     // Endpoint available for owner in order to remove the address of the marketplace contract
@@ -102,6 +101,7 @@ pub trait ClaimsContract:
     #[endpoint(removeDataNftMarketplaceAddress)]
     fn remove_data_nft_marketplace_address(&self) {
         self.data_nft_marketplace_address().clear();
+        self.data_nft_marketplace_address_cleared_event();
     }
 
     // Endpoint available for privileged addresses of the smart contract to add a claim of a specific claim type for a specific address.
@@ -252,33 +252,16 @@ pub trait ClaimsContract:
             self.claim_collected_event(&caller, &what_type_to_claim, &claim);
         } else {
             // Sets claim to the sum of all reserved tokens for the calling address.
-
-            // Checks claims of the reward type and adds them to the sum if they are not zero.
-            let reward_claim = self.claim(&caller, &ClaimType::Reward).get();
-            if reward_claim > BigUint::zero() {
-                claim += &reward_claim;
-                self.claim_collected_event(&caller, &ClaimType::Reward, &reward_claim);
-                self.claim(&caller, &ClaimType::Reward).set(BigUint::zero());
+            for claim_type in 0..ClaimType::max() {
+                let current_claim_type = ClaimType::from(claim_type);
+                let current_claim = self.claim(&caller, &current_claim_type).get();
+                if current_claim > BigUint::zero() {
+                    claim += &current_claim;
+                    self.claim_collected_event(&caller, &current_claim_type, &current_claim);
+                    self.claim(&caller, &current_claim_type)
+                        .set(BigUint::zero());
+                }
             }
-
-            // Checks claims of the airdrop type and adds them to the sum if they are not zero.
-            let airdrop_claim = self.claim(&caller, &ClaimType::Airdrop).get();
-            if airdrop_claim > BigUint::zero() {
-                claim += &airdrop_claim;
-                self.claim_collected_event(&caller, &ClaimType::Airdrop, &airdrop_claim);
-                self.claim(&caller, &ClaimType::Airdrop)
-                    .set(BigUint::zero());
-            }
-
-            // Checks claims of the allocation type and adds them to the sum if they are not zero.
-            let allocation_claim = self.claim(&caller, &ClaimType::Allocation).get();
-            if allocation_claim > BigUint::zero() {
-                claim += &allocation_claim;
-                self.claim_collected_event(&caller, &ClaimType::Allocation, &allocation_claim);
-                self.claim(&caller, &ClaimType::Allocation)
-                    .set(BigUint::zero());
-            }
-
             self.require_value_not_zero(&claim);
         }
         // Send the amount of tokens harvested (all tokens of a given claim type or the sum for all claim types) to the calling address.

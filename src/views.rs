@@ -1,7 +1,7 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-use crate::storage::{self, ClaimType};
+use crate::storage::{self, ClaimType, Max};
 
 // Structure that is used in order to return claims with their last modification timestamp
 #[derive(ManagedVecItem, Clone, NestedEncode, NestedDecode, TopEncode, TopDecode, TypeAbi)]
@@ -17,9 +17,10 @@ pub trait ViewsModule: storage::StorageModule {
     #[view(viewClaims)]
     fn view_claims(&self, address: &ManagedAddress) -> BigUint {
         let mut claim = BigUint::zero();
-        claim += self.claim(address, &ClaimType::Reward).get();
-        claim += self.claim(address, &ClaimType::Airdrop).get();
-        claim += self.claim(address, &ClaimType::Allocation).get();
+        for claim_type in 0..ClaimType::max() {
+            claim += self.claim(address, &ClaimType::from(claim_type)).get();
+        }
+
         claim
     }
 
@@ -27,20 +28,15 @@ pub trait ViewsModule: storage::StorageModule {
     #[view(viewClaimWithDate)]
     fn view_claims_with_date(&self, address: &ManagedAddress) -> ManagedVec<Claim<Self::Api>> {
         let mut claims = ManagedVec::new();
-        claims.push(Claim {
-            amount: self.claim(address, &ClaimType::Reward).get(),
-            date: self.claim_modify_date(address, &ClaimType::Reward).get(),
-        });
-        claims.push(Claim {
-            amount: self.claim(address, &ClaimType::Airdrop).get(),
-            date: self.claim_modify_date(address, &ClaimType::Airdrop).get(),
-        });
-        claims.push(Claim {
-            amount: self.claim(address, &ClaimType::Allocation).get(),
-            date: self
-                .claim_modify_date(address, &ClaimType::Allocation)
-                .get(),
-        });
+        for claim_type in 0..ClaimType::max() {
+            claims.push(Claim {
+                amount: self.claim(address, &ClaimType::from(claim_type)).get(),
+                date: self
+                    .claim_modify_date(address, &ClaimType::from(claim_type))
+                    .get(),
+            });
+        }
+
         claims
     }
 }
