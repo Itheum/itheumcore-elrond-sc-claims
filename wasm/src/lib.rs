@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           17
+// Endpoints:                           20
 // Async Callback (empty):               1
-// Total number of exported functions:  19
+// Total number of exported functions:  22
 
 #![no_std]
 #![feature(alloc_error_handler, lang_items)]
@@ -23,6 +23,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         unpause
         addPrivilegedAddress
         removePrivilegedAddress
+        setDataNftMarketplaceAddress
+        removeDataNftMarketplaceAddress
         addClaim
         addClaims
         removeClaim
@@ -33,6 +35,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         viewClaimModifyDate
         isPaused
         viewPrivilegedAddresses
+        viewDataNftMarketplaceAddress
         viewClaims
         viewClaimWithDate
     )

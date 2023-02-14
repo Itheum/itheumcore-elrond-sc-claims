@@ -7,6 +7,32 @@ pub enum ClaimType {
     Reward,
     Airdrop,
     Allocation,
+    Royalties,
+}
+
+// Trait used to define the maximum value of the ClaimType enumeration
+trait Max {
+    fn max() -> u8;
+}
+
+// Implementation of the Max trait for the ClaimType enumeration
+impl Max for ClaimType {
+    fn max() -> u8 {
+        3
+    }
+}
+
+// Implementation of the From trait for the ClaimType enumeration
+impl From<u8> for ClaimType {
+    fn from(claim_type: u8) -> Self {
+        match claim_type {
+            0 => ClaimType::Reward,
+            1 => ClaimType::Airdrop,
+            2 => ClaimType::Allocation,
+            3 => ClaimType::Royalties,
+            _ => ClaimType::Reward,
+        }
+    }
 }
 
 // Module that handles the common storage of the smart contract
@@ -40,4 +66,8 @@ pub trait StorageModule {
     #[view(viewPrivilegedAddresses)]
     #[storage_mapper("privilegedAddresses")]
     fn privileged_addresses(&self) -> SetMapper<ManagedAddress>;
+
+    #[view(viewDataNftMarketplaceAddress)]
+    #[storage_mapper("dataNftMarketplaceAddress")]
+    fn data_nft_marketplace_address(&self) -> SingleValueMapper<ManagedAddress>;
 }
