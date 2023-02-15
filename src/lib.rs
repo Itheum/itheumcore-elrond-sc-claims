@@ -3,12 +3,16 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-use crate::storage::{ClaimType, Max};
-
+pub mod constants;
 pub mod events;
 pub mod requirements;
 pub mod storage;
 pub mod views;
+
+use crate::{
+    constants::*,
+    storage::{ClaimType, Max},
+};
 
 #[multiversx_sc::contract]
 pub trait ClaimsContract:
@@ -27,14 +31,14 @@ pub trait ClaimsContract:
     #[only_owner]
     #[endpoint(setClaimToken)]
     fn set_claim_token(&self, token: TokenIdentifier) {
-        require!(self.claim_token().is_empty(), "Claim token is already set");
+        require!(self.claim_token().is_empty(), ERR_TOKEN_SET);
         self.claim_token().set(&token);
     }
 
     // Endpoint available for privileged addresses of the smart contract to pause claim harvesting. Cannot be called while harvesting is already paused.
     #[endpoint(pause)]
     fn pause(&self) {
-        require!(!self.is_paused().get(), "Contract is already paused");
+        require!(!self.is_paused().get(), ERR_CONTRACT_ALREADY_PAUSED);
         let caller = self.blockchain().get_caller();
         self.require_address_is_privileged(&caller);
         self.is_paused().set(true);
@@ -45,7 +49,7 @@ pub trait ClaimsContract:
     #[only_owner]
     #[endpoint(unpause)]
     fn unpause(&self) {
-        require!(self.is_paused().get(), "Contract is already unpaused");
+        require!(self.is_paused().get(), ERR_CONTRACT_ALREADY_UNPAUSED);
         self.is_paused().set(false);
         self.harvest_unpaused_event();
     }
@@ -54,54 +58,66 @@ pub trait ClaimsContract:
     #[only_owner]
     #[endpoint(addPrivilegedAddress)]
     fn add_privileged_address(&self, address: ManagedAddress) {
-        let privileged_addresses = self.privileged_addresses();
+        let mut privileged_addresses = self.privileged_addresses();
         require!(
             !privileged_addresses.contains(&address),
-            "Address is already privileged"
+            ERR_ADDRESS_PRIVILEGED
         );
         require!(
-            privileged_addresses.len() < 2usize,
-            "Maximum number of priviledged addresses reached"
+            privileged_addresses.len() < MAX_NUMBER_OF_PRIVILEGED_ADDRESSES,
+            ERR_MAX_NUMBER_OF_PRIVILEGED_ADDRESSES
         );
 
         let owner = self.blockchain().get_owner_address();
-        require!(
-            owner != address,
-            "Owner cannot be added to priviledged addresses"
-        );
+        require!(owner != address, ERR_OWNER_NOT_PRIVILEGED);
 
         self.privileged_address_added_event(&address);
-        self.privileged_addresses().insert(address);
+        privileged_addresses.insert(address);
     }
 
     // Endpoint available for owner in order to remove an address from the list of privileged addresses
     #[only_owner]
     #[endpoint(removePrivilegedAddress)]
     fn remove_privileged_address(&self, address: ManagedAddress) {
-        let privileged_addresses = self.privileged_addresses();
+        let mut privileged_addresses = self.privileged_addresses();
         require!(
             privileged_addresses.contains(&address),
-            "Address is not privileged"
+            ERR_ADDRESS_NOT_PRIVILEGED
         );
 
         self.privileged_address_removed_event(&address);
-        self.privileged_addresses().remove(&address);
+        privileged_addresses.remove(&address);
     }
 
-    // Endpoint available for owner in order to set the address of the marketplace contract
+    // Endpoint available for owner in order to add depositor addresses
     #[only_owner]
-    #[endpoint(setDataNftMarketplaceAddress)]
-    fn set_data_nft_marketplace_address(&self, address: ManagedAddress) {
-        self.data_nft_marketplace_address().set(&address);
-        self.data_nft_marketplace_address_set_event(&address);
+    #[endpoint(addDepositorAddress)]
+    fn add_depositor_address(&self, address: ManagedAddress) {
+        let mut depositor_addresses = self.depositor_addresses();
+        require!(
+            !depositor_addresses.contains(&address),
+            ERR_ADDRESS_DEPOSITOR
+        );
+
+        let owner = self.blockchain().get_owner_address();
+        require!(owner != address, ERR_OWNER_NOT_DEPOSITOR);
+
+        self.depositor_address_added_event(&address);
+        depositor_addresses.insert(address);
     }
 
-    // Endpoint available for owner in order to remove the address of the marketplace contract
+    // Endpoint available for owner in order to remove depositor addresses
     #[only_owner]
-    #[endpoint(removeDataNftMarketplaceAddress)]
-    fn remove_data_nft_marketplace_address(&self) {
-        self.data_nft_marketplace_address().clear();
-        self.data_nft_marketplace_address_cleared_event();
+    #[endpoint(removeDepositorAddress)]
+    fn remove_depositor_address(&self, address: ManagedAddress) {
+        let mut depositor_addresses = self.depositor_addresses();
+        require!(
+            depositor_addresses.contains(&address),
+            ERR_ADDRESS_NOT_DEPOSITOR
+        );
+
+        self.depositor_address_removed_event(&address);
+        depositor_addresses.remove(&address);
     }
 
     // Endpoint available for privileged addresses of the smart contract to add a claim of a specific claim type for a specific address.
@@ -115,7 +131,7 @@ pub trait ClaimsContract:
         self.require_value_not_zero(&payment_amount);
 
         let caller = self.blockchain().get_caller();
-        self.require_address_is_privileged(&caller);
+        self.require_address_is_depositor(&caller);
 
         //Add the amount of the tokens sent to the current claim reservation
         let current_claim = self.claim(address, &claim_type).get();
@@ -162,10 +178,7 @@ pub trait ClaimsContract:
         }
 
         // Panic if the amount of tokens sent by the owner to the endpoint are not equal to the sum of the claims added to the contract
-        require!(
-            sum_of_claims == payment_amount,
-            "Claims added must equal payment amount"
-        );
+        require!(sum_of_claims == payment_amount, ERR_CLAIM_EQUAL_PAYMENT);
     }
 
     // Endpoint available for the owner of the smart contract to remove a claim of a specific claim type for a specific address.
@@ -234,7 +247,7 @@ pub trait ClaimsContract:
     // Can be given an argument as a claim type to harvest only specific claim type. If the claim_type argument is not provided, all claim types for the calling addresses will be harvested.
     #[endpoint(claim)]
     fn harvest_claim(&self, claim_type: OptionalValue<ClaimType>) {
-        require!(!self.is_paused().get(), "Contract is paused");
+        require!(!self.is_paused().get(), ERR_CONTRACT_PAUSED);
         self.require_claim_token_is_set();
 
         let caller = self.blockchain().get_caller();

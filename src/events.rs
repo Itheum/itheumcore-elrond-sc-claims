@@ -23,12 +23,12 @@ pub trait EventsModule {
     fn privileged_address_removed_event(&self, #[indexed] address: &ManagedAddress);
 
     // Emitted whenever the owner sets the Data NFT marketplace contract address
-    #[event("dataNftMarketplaceAddressSet")]
-    fn data_nft_marketplace_address_set_event(&self, #[indexed] address: &ManagedAddress);
+    #[event("depositorAddressAdded")]
+    fn depositor_address_added_event(&self, #[indexed] address: &ManagedAddress);
 
     // Emitted whenever the owner clears the Data NFT marketplace contract address
-    #[event("dataNftMarketplaceAddressCleared")]
-    fn data_nft_marketplace_address_cleared_event(&self);
+    #[event("depositorAddressRemoved")]
+    fn depositor_address_removed_event(&self, #[indexed] address: &ManagedAddress);
 
     // Emitted whenever a new claim is added to the smart contract
     #[event("claimAdded")]

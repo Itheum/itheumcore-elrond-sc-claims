@@ -23,8 +23,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         unpause
         addPrivilegedAddress
         removePrivilegedAddress
-        setDataNftMarketplaceAddress
-        removeDataNftMarketplaceAddress
+        addDepositorAddress
+        removeDepositorAddress
         addClaim
         addClaims
         removeClaim
@@ -35,7 +35,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         viewClaimModifyDate
         isPaused
         viewPrivilegedAddresses
-        viewDataNftMarketplaceAddress
+        viewDepositorAddresses
         viewClaims
         viewClaimWithDate
     )

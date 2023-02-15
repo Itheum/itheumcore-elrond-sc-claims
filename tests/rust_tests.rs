@@ -1,5 +1,5 @@
-use claims::storage::StorageModule;
 use claims::*;
+use claims::{constants::*, storage::StorageModule};
 use multiversx_sc::{
     codec::multi_types::{MultiValue3, OptionalValue},
     types::{Address, MultiValueEncoded},
@@ -130,7 +130,7 @@ fn pause_unpause_test() {
                 sc.unpause();
             },
         )
-        .assert_user_error("Contract is already unpaused");
+        .assert_user_error(ERR_CONTRACT_ALREADY_UNPAUSED);
 
     b_wrapper
         .execute_tx(
@@ -158,7 +158,7 @@ fn pause_unpause_test() {
                 sc.pause();
             },
         )
-        .assert_user_error("Contract is already paused");
+        .assert_user_error(ERR_CONTRACT_ALREADY_PAUSED);
 
     b_wrapper
         .execute_tx(
@@ -214,7 +214,7 @@ fn pause_unpause_test() {
                 sc.pause();
             },
         )
-        .assert_user_error("Address doesn't have the privilege to use this operation");
+        .assert_user_error(ERR_ADDRESS_NOT_AUTHORIZED);
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
@@ -254,7 +254,7 @@ fn add_and_remove_privileged_addresses_test() {
                 sc.add_privileged_address(managed_address!(third_user_addr));
             },
         )
-        .assert_user_error("Maximum number of priviledged addresses reached");
+        .assert_user_error(ERR_MAX_NUMBER_OF_PRIVILEGED_ADDRESSES);
     b_wrapper
         .execute_tx(
             &owner_address,
@@ -264,7 +264,7 @@ fn add_and_remove_privileged_addresses_test() {
                 sc.remove_privileged_address(managed_address!(third_user_addr));
             },
         )
-        .assert_user_error("Address is not privileged");
+        .assert_user_error(ERR_ADDRESS_NOT_PRIVILEGED);
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             assert_eq!(
@@ -296,7 +296,7 @@ fn add_and_remove_privileged_addresses_test() {
                 sc.add_privileged_address(managed_address!(owner_address));
             },
         )
-        .assert_user_error("Owner cannot be added to priviledged addresses");
+        .assert_user_error(ERR_OWNER_NOT_PRIVILEGED);
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             assert_eq!(
@@ -354,7 +354,7 @@ fn add_and_remove_claim_test() {
                 sc.add_claim(&managed_address!(user_addr), storage::ClaimType::Airdrop);
             },
         )
-        .assert_user_error("Operations must have non-zero value");
+        .assert_user_error(ERR_NON_ZERO_VALUE);
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
@@ -408,7 +408,7 @@ fn add_and_remove_claim_test() {
                 );
             },
         )
-        .assert_user_error("Operations must have non-zero value");
+        .assert_user_error(ERR_NON_ZERO_VALUE);
 
     b_wrapper
         .execute_esdt_transfer(
@@ -425,7 +425,7 @@ fn add_and_remove_claim_test() {
                 );
             },
         )
-        .assert_user_error("Cannot remove more than current claim");
+        .assert_user_error(ERR_MORE_THAN_CLAIM);
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
@@ -533,7 +533,7 @@ fn add_and_remove_claims_test() {
                 sc.add_claims(args);
             },
         )
-        .assert_user_error("Claims added must equal payment amount");
+        .assert_user_error(ERR_CLAIM_EQUAL_PAYMENT);
 
     b_wrapper
         .execute_esdt_transfer(
@@ -557,7 +557,7 @@ fn add_and_remove_claims_test() {
                 sc.add_claims(args);
             },
         )
-        .assert_user_error("Exceeded maximum number of claims per operation (200)");
+        .assert_user_error(ERR_MAX_NUMBER_OF_CLAIMS_PER_OPERATION);
 
     b_wrapper
         .execute_esdt_transfer(
@@ -587,7 +587,7 @@ fn add_and_remove_claims_test() {
                 sc.add_claims(args);
             },
         )
-        .assert_user_error("Operations must have non-zero value");
+        .assert_user_error(ERR_NON_ZERO_VALUE);
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
@@ -699,7 +699,7 @@ fn add_and_remove_claims_test() {
                 sc.remove_claims(args);
             },
         )
-        .assert_user_error("Operations must have non-zero value");
+        .assert_user_error(ERR_NON_ZERO_VALUE);
 
     b_wrapper
         .execute_esdt_transfer(
@@ -729,7 +729,7 @@ fn add_and_remove_claims_test() {
                 sc.remove_claims(args);
             },
         )
-        .assert_user_error("Cannot remove more than current claim");
+        .assert_user_error(ERR_MORE_THAN_CLAIM);
 
     b_wrapper
         .execute_esdt_transfer(
@@ -753,7 +753,7 @@ fn add_and_remove_claims_test() {
                 sc.remove_claims(args);
             },
         )
-        .assert_user_error("Exceeded maximum number of claims per operation (200)");
+        .assert_user_error(ERR_MAX_NUMBER_OF_CLAIMS_PER_OPERATION);
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
@@ -811,7 +811,7 @@ fn add_claim_privileged_test() {
                 sc.add_claim(&managed_address!(user_addr), storage::ClaimType::Airdrop);
             },
         )
-        .assert_user_error("Address doesn't have the privilege to use this operation");
+        .assert_user_error(ERR_ADDRESS_NOT_AUTHORIZED);
 }
 
 #[test] //Tests wether privileged addresses can add claims, but a non-priviledged address cannot
@@ -877,7 +877,7 @@ fn add_claims_privileged_test() {
                 sc.add_claims(args);
             },
         )
-        .assert_user_error("Address doesn't have the privilege to use this operation");
+        .assert_user_error(ERR_ADDRESS_NOT_AUTHORIZED);
 }
 
 #[test] //Tests whether the transaction to add a token fails in the case in which a different token than the claim token is sent
@@ -898,7 +898,7 @@ fn add_claim_wrong_token_test() {
                 sc.add_claim(&managed_address!(user_addr), storage::ClaimType::Airdrop);
             },
         )
-        .assert_user_error("Can only add designated token");
+        .assert_user_error(ERR_TOKEN_INCORRECT);
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
@@ -947,7 +947,7 @@ fn add_claims_wrong_token_test() {
                 sc.add_claims(args);
             },
         )
-        .assert_user_error("Can only add designated token");
+        .assert_user_error(ERR_TOKEN_INCORRECT);
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
@@ -991,7 +991,7 @@ fn reset_claim_token_test() {
                 sc.set_claim_token(managed_token_id!(TOKEN_ID));
             },
         )
-        .assert_user_error("Claim token is already set");
+        .assert_user_error(ERR_TOKEN_SET);
 }
 
 #[test] //Tests whether claiming is impossible in pause state
@@ -1023,7 +1023,7 @@ fn harvest_claim_in_pause_test() {
                 sc.harvest_claim(OptionalValue::Some(storage::ClaimType::Airdrop));
             },
         )
-        .assert_user_error("Contract is paused");
+        .assert_user_error(ERR_CONTRACT_PAUSED);
 }
 
 #[test] //Tests whether users can claim
@@ -1103,7 +1103,7 @@ fn harvest_wrong_claim_type_test() {
                 sc.harvest_claim(OptionalValue::Some(storage::ClaimType::Reward));
             },
         )
-        .assert_user_error("Operations must have non-zero value");
+        .assert_user_error(ERR_NON_ZERO_VALUE);
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {

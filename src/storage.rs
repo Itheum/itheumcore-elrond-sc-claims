@@ -67,7 +67,7 @@ pub trait StorageModule {
     #[storage_mapper("privilegedAddresses")]
     fn privileged_addresses(&self) -> SetMapper<ManagedAddress>;
 
-    #[view(viewDataNftMarketplaceAddress)]
-    #[storage_mapper("dataNftMarketplaceAddress")]
-    fn data_nft_marketplace_address(&self) -> SingleValueMapper<ManagedAddress>;
+    #[view(viewDepositorAddresses)]
+    #[storage_mapper("depositorAddresses")]
+    fn depositor_addresses(&self) -> SetMapper<ManagedAddress>;
 }
