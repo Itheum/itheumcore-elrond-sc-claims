@@ -93,10 +93,40 @@ removePrivilegedAddress(){
     --send || return
 }
 
+addDepositorAddress(){
+    # $1 = address to which to give privileges
+
+    address="0x$(erdpy wallet bech32 --decode ${1})"
+    erdpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=10000000 \
+    --function "addDepositorAddress" \
+    --arguments $address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
+removeDepositorAddress(){
+    # $1 = address to which to remove privileges
+
+    address="0x$(erdpy wallet bech32 --decode ${1})"
+    erdpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=10000000 \
+    --function "removeDepositorAddress" \
+    --arguments $address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
 addClaim(){
     # $1 = amount to add to claim
     # $2 = address to which to attribute the claim
-    # $3 = claim type (0 = reward, 1 = aidrop, 2 = allocation)
+    # $3 = claim type (0 = reward, 1 = aidrop, 2 = allocation, 3 = royalties)
 
     method="0x$(echo -n 'addClaim' | xxd -p -u | tr -d '\n')"
     address="0x$(erdpy wallet bech32 --decode ${2})"
@@ -113,7 +143,7 @@ addClaim(){
 
 removeClaim(){
     # $1 = address from which to remove the claim
-    # $2 = claim type (0 = reward, 1 = aidrop, 2 = allocation)
+    # $2 = claim type (0 = reward, 1 = aidrop, 2 = allocation, 3 = royalties)
     # $3 = amount to remove from claim
 
     address="0x$(erdpy wallet bech32 --decode ${1})"
@@ -140,7 +170,7 @@ harvestAllClaims(){
 }
 
 harvestClaim(){
-    # $1 = claim type (0 = reward, 1 = aidrop, 3 = allocation)
+    # $1 = claim type (0 = reward, 1 = aidrop, 2 = allocation, 3 = royalties)
 
     erdpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
