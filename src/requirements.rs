@@ -44,7 +44,7 @@ pub trait RequirementsModule: storage::StorageModule {
     }
 
     // Checks whether the address has the Data NFTR Marketplace Special Rights
-    fn require_address_is_depositor(&self, address: &ManagedAddress) {
+    fn require_address_has_deposit_rights(&self, address: &ManagedAddress) {
         require!(
             self.privileged_addresses().contains(address)
                 || &self.blockchain().get_owner_address() == address

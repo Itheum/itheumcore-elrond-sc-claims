@@ -66,6 +66,12 @@ where
         .assert_ok();
 
     blockchain_wrapper
+        .execute_tx(&owner_address, &cf_wrapper, &rust_zero, |sc| {
+            sc.add_depositor_address(managed_address!(&second_user_address));
+        })
+        .assert_ok();
+
+    blockchain_wrapper
         .execute_query(&cf_wrapper, |sc| {
             assert_eq!(sc.is_paused().get(), true);
         })
@@ -107,13 +113,14 @@ fn deploy_test() {
 
 #[test] //Tests wether pausing and unpausing the contract works correctly
         //Tests wether trying to change the pause state to the already set state returns an error
-        //Tests wether privileged addresses can pause harvesting, but normal addresses cannnot
+        //Tests wether privileged addresses can pause harvesting, but normal or depositors addresses cannnot
 fn pause_unpause_test() {
     let mut setup = setup_contract(claims::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
     let owner_address = &setup.owner_address;
     let first_user_address = &setup.first_user_address;
     let second_user_address = &setup.second_user_address;
+    let third_user_address = &setup.third_user_address;
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
@@ -217,6 +224,17 @@ fn pause_unpause_test() {
         .assert_user_error(ERR_ADDRESS_NOT_AUTHORIZED);
 
     b_wrapper
+        .execute_tx(
+            &third_user_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.pause();
+            },
+        )
+        .assert_user_error(ERR_ADDRESS_NOT_AUTHORIZED);
+
+    b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             assert_eq!(sc.is_paused().get(), false);
         })
@@ -224,6 +242,7 @@ fn pause_unpause_test() {
 }
 
 #[test] //Tests wether adding and removing privileged addresses works as expected
+        //Tests if trying to adde more privileged addresses than the max number of privileged addresses returns an error
         //Tests if trying give privileges to an address that already has them returns an error
         //Tests if trying to offer privileges to the owner of the smart contract returns an error
         //Tests if trying to remove the privileges that is not privileged returns an error
@@ -304,6 +323,84 @@ fn add_and_remove_privileged_addresses_test() {
                     .contains(&managed_address!(first_user_addr))
                     && !sc
                         .privileged_addresses()
+                        .contains(&managed_address!(second_user_addr)),
+                true
+            );
+        })
+        .assert_ok();
+}
+
+#[test] //Tests wether adding and removing depositor addresses works as expected
+        //Tests if trying give depositor to an address that already has them returns an error
+        //Tests if trying to offer depositor to the owner of the smart contract returns an error
+        //Tests if trying to remove the depositor that is not depositor returns an error
+fn add_and_remove_depositor_addresses_test() {
+    let mut setup = setup_contract(claims::contract_obj);
+    let b_wrapper = &mut setup.blockchain_wrapper;
+    let owner_address = &setup.owner_address;
+    let first_user_addr = &setup.first_user_address;
+    let second_user_addr = &setup.second_user_address;
+    let third_user_addr = &setup.third_user_address;
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.add_depositor_address(managed_address!(first_user_addr));
+            },
+        )
+        .assert_ok();
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.remove_depositor_address(managed_address!(third_user_addr));
+            },
+        )
+        .assert_user_error(ERR_ADDRESS_NOT_DEPOSITOR);
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.depositor_addresses()
+                    .contains(&managed_address!(first_user_addr))
+                    && sc
+                        .depositor_addresses()
+                        .contains(&managed_address!(second_user_addr)),
+                true
+            );
+        })
+        .assert_ok();
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.remove_depositor_address(managed_address!(first_user_addr));
+            },
+        )
+        .assert_ok();
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.add_depositor_address(managed_address!(owner_address));
+            },
+        )
+        .assert_user_error(ERR_OWNER_NOT_DEPOSITOR);
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                !sc.depositor_addresses()
+                    .contains(&managed_address!(first_user_addr))
+                    && sc
+                        .depositor_addresses()
                         .contains(&managed_address!(second_user_addr)),
                 true
             );
@@ -782,12 +879,16 @@ fn add_and_remove_claims_test() {
         .assert_ok();
 }
 
-#[test] //Tests wether privileged addresses can add a claim, but a non-priviledged address cannot
-fn add_claim_privileged_test() {
+#[test] //Tests wether privileged addresses or depositors can add a claim, but a non-priviledged address cannot
+fn add_claim_privileged_or_depositor_test() {
     let mut setup = setup_contract(claims::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
     let user_addr = &setup.first_user_address;
+    let user_addr_2 = &setup.second_user_address;
     let user_addr_3 = &setup.third_user_address;
+
+    b_wrapper.set_esdt_balance(user_addr_2, TOKEN_ID, &rust_biguint!(1_000));
+
     b_wrapper
         .execute_esdt_transfer(
             user_addr,
@@ -800,6 +901,20 @@ fn add_claim_privileged_test() {
             },
         )
         .assert_ok();
+
+    b_wrapper
+        .execute_esdt_transfer(
+            user_addr_2,
+            &setup.contract_wrapper,
+            TOKEN_ID,
+            0,
+            &rust_biguint!(1_000),
+            |sc| {
+                sc.add_claim(&managed_address!(user_addr), storage::ClaimType::Royalties);
+            },
+        )
+        .assert_ok();
+
     b_wrapper
         .execute_esdt_transfer(
             user_addr_3,
@@ -814,12 +929,16 @@ fn add_claim_privileged_test() {
         .assert_user_error(ERR_ADDRESS_NOT_AUTHORIZED);
 }
 
-#[test] //Tests wether privileged addresses can add claims, but a non-priviledged address cannot
-fn add_claims_privileged_test() {
+#[test] //Tests wether privileged addresses or depositors can add claims, but a non-priviledged address cannot
+fn add_claims_privileged_or_depositor_test() {
     let mut setup = setup_contract(claims::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
     let user_addr = &setup.first_user_address;
+    let user_addr_2 = &setup.second_user_address;
     let user_addr_3 = &setup.third_user_address;
+
+    b_wrapper.set_esdt_balance(user_addr_2, TOKEN_ID, &rust_biguint!(1_000));
+
     b_wrapper
         .execute_esdt_transfer(
             user_addr,
@@ -849,6 +968,37 @@ fn add_claims_privileged_test() {
             },
         )
         .assert_ok();
+
+    b_wrapper
+        .execute_esdt_transfer(
+            user_addr_2,
+            &setup.contract_wrapper,
+            TOKEN_ID,
+            0,
+            &rust_biguint!(1_000),
+            |sc| {
+                let mut args = MultiValueEncoded::new();
+                args.push(MultiValue3(
+                    (
+                        managed_address!(user_addr),
+                        storage::ClaimType::Airdrop,
+                        managed_biguint!(600),
+                    )
+                        .into(),
+                ));
+                args.push(MultiValue3(
+                    (
+                        managed_address!(user_addr_3),
+                        storage::ClaimType::Allocation,
+                        managed_biguint!(400),
+                    )
+                        .into(),
+                ));
+                sc.add_claims(args);
+            },
+        )
+        .assert_ok();
+
     b_wrapper
         .execute_esdt_transfer(
             user_addr_3,

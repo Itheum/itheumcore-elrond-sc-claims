@@ -131,7 +131,7 @@ pub trait ClaimsContract:
         self.require_value_not_zero(&payment_amount);
 
         let caller = self.blockchain().get_caller();
-        self.require_address_is_depositor(&caller);
+        self.require_address_has_deposit_rights(&caller);
 
         //Add the amount of the tokens sent to the current claim reservation
         let current_claim = self.claim(address, &claim_type).get();
@@ -159,7 +159,7 @@ pub trait ClaimsContract:
         self.require_value_not_zero(&payment_amount);
 
         let caller = self.blockchain().get_caller();
-        self.require_address_is_privileged(&caller);
+        self.require_address_has_deposit_rights(&caller);
 
         let timestamp = self.blockchain().get_block_timestamp();
         // Initialize the sum of claims to be added to zero
