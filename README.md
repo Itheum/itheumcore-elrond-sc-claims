@@ -2,11 +2,11 @@
 
 ## Abstract
 
-The claims smart contract is the tool that stands at the heart of collaboration between Itheum and its community. Whether it's a reward for helping the project, an airdrop or some allocation of tokens, the claims smart contract is the tool that allows Itheum to give tokens to all community members that are using the Elrond blockchain.
+The claims smart contract is the tool that stands at the heart of collaboration between Itheum and its community. Whether it's a reward for helping the project, an airdrop, some allocation of tokens or trading royalties, the claims smart contract is the tool that allows Itheum to give tokens to all community members that are using the Elrond blockchain.
 
 ## Introduction
 
-This contract allows the owner of it to send tokens to the smart contract and reserve them for a specific address of their choice. There are 3 types of claims that are defined in the smart contract: rewards, airdrops and allocations. If a user has claims, they can harvest each type individually or can choose to harvest all of them in the same transaction. The contract is designed such that a user can only take their designated tokens from the contract.
+This contract allows the owner of it to send tokens to the smart contract and reserve them for a specific address of their choice. There are 4 types of claims that are defined in the smart contract: rewards, airdrops, allocations and royalties. If a user has claims, they can harvest each type individually or can choose to harvest all of them in the same transaction. The contract is designed such that a user can only take their designated tokens from the contract.
 
 ## Prerequisites
 
@@ -89,6 +89,32 @@ Example: "addPrivilegedAddress@8bc1730b9afdd4546a039c3baa043f37525822100e04cfc98
 Endpoint that removes privileges of an already privileged address.
 Call structure: "removePrivilegedAddress" + "@" + Address hex encoded
 Example: "removePrivilegedAddress@8bc1730b9afdd4546a039c3baa043f37525822100e04cfc986b6955e05cbf101"
+
+#### addDepositorAddress
+
+```rust
+    #[endpoint(addDepositorAddress)]
+    fn add_depositor_address(&self,
+        address: ManagedAddress
+    );
+```
+
+Endpoint that gives an address the right to add claims.
+Call structure: "addDepositorAddress" + "@" + Address hex encoded
+Example: "addDepositorAddress@8bc1730b9afdd4546a039c3baa043f37525822100e04cfc986b6955e05cbf101"
+
+#### removeDepositorAddress
+
+```rust
+    #[endpoint(removeDepositorAddress)]
+    fn remove_depositor_address(&self,
+        address: ManagedAddress
+    );
+```
+
+Endpoint that removes an already added address to the depositor list.
+Call structure: "removeDepositorAddress" + "@" + Address hex encoded
+Example: "removeDepositorAddress@8bc1730b9afdd4546a039c3baa043f37525822100e04cfc986b6955e05cbf101"
 
 #### removeClaim
 
