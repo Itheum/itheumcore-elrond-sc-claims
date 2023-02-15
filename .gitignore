@@ -3,12 +3,12 @@
 /target/
 */target/
 
-# The erdpy output
+# The mxpy output
 output*
 deployOutput
 
 wallets/
 commands.txt
 wallet.pem
-erdpy.data-storage.json
+mxpy.data-storage.json
 deploy-devnet.interaction.json

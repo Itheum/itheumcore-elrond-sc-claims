@@ -1,7 +1,7 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-use crate::storage::{self, ClaimType, Max};
+use crate::storage::{self, ClaimType, Len};
 
 // Structure that is used in order to return claims with their last modification timestamp
 #[derive(ManagedVecItem, Clone, NestedEncode, NestedDecode, TopEncode, TopDecode, TypeAbi)]
@@ -17,7 +17,7 @@ pub trait ViewsModule: storage::StorageModule {
     #[view(viewClaims)]
     fn view_claims(&self, address: &ManagedAddress) -> BigUint {
         let mut claim = BigUint::zero();
-        for claim_type in 0..ClaimType::max() {
+        for claim_type in 0..ClaimType::len() + 1 {
             claim += self.claim(address, &ClaimType::from(claim_type)).get();
         }
 
@@ -28,7 +28,7 @@ pub trait ViewsModule: storage::StorageModule {
     #[view(viewClaimWithDate)]
     fn view_claims_with_date(&self, address: &ManagedAddress) -> ManagedVec<Claim<Self::Api>> {
         let mut claims = ManagedVec::new();
-        for claim_type in 0..ClaimType::max() {
+        for claim_type in 0..ClaimType::len() + 1 {
             claims.push(Claim {
                 amount: self.claim(address, &ClaimType::from(claim_type)).get(),
                 date: self

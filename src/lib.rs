@@ -11,7 +11,7 @@ pub mod views;
 
 use crate::{
     constants::*,
-    storage::{ClaimType, Max},
+    storage::{ClaimType, Len},
 };
 
 #[multiversx_sc::contract]
@@ -265,7 +265,7 @@ pub trait ClaimsContract:
             self.claim_collected_event(&caller, &what_type_to_claim, &claim);
         } else {
             // Sets claim to the sum of all reserved tokens for the calling address.
-            for claim_type in 0..ClaimType::max() {
+            for claim_type in 0..ClaimType::len() {
                 let current_claim_type = ClaimType::from(claim_type);
                 let current_claim = self.claim(&caller, &current_claim_type).get();
                 if current_claim > BigUint::zero() {

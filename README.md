@@ -10,9 +10,9 @@ This contract allows the owner of it to send tokens to the smart contract and re
 
 ## Prerequisites
 
-This documentation assumes the user has previous programming experience. Moreover, the user should have a basic understanding of the Elrond blockchain. If you are new to the blockchain, please refer to the [Elrond documentation](https://docs.elrond.com/). In order to develop Elrond smart contract related solutions, one needs to have installed [erdpy](https://docs.elrond.com/sdk-and-tools/erdpy/installing-erdpy/).
+This documentation assumes the user has previous programming experience. Moreover, the user should have a basic understanding of the Elrond blockchain. If you are new to the blockchain, please refer to the [MultiversX documentation](https://docs.multiversx.com/). In order to develop Elrond smart contract related solutions, one needs to have installed [mxpy](https://docs.multiversx.com/sdk-and-tools/sdk-py/installing-mxpy/).
 
-Understanding this document is also easier if one knows how [ESDT token transactions](https://docs.elrond.com/developers/esdt-tokens/#transfers-to-a-smart-contract) are structured on the Elrond blockchain.
+Understanding this document is also easier if one knows how [ESDT token transactions](https://docs.multiversx.com/tokens/esdt-tokens#transfers-to-a-smart-contract) are structured on the Elrond blockchain.
 
 ## Itheum deployed claims contract addresses
 
@@ -239,7 +239,7 @@ Note: In order to run the tests, one has to use the rust nightly version. One ca
 
 ### How to deploy
 
-In order to deploy the smart contract on devnet one can use the interaction snippets present in the devnet.snippets file (which is located in the interactions folder). Before using the snippets, make sure to add your pem file in the root of the project under the name "wallet.pem" (or change the name to whichever one you wish to use in the interaction snippets). If you need info about how to derive a pem file you can find them [here](https://docs.elrond.com/sdk-and-tools/erdpy/deriving-the-wallet-pem-file/). To run the functions from the interaction file, one can use:
+In order to deploy the smart contract on devnet one can use the interaction snippets present in the devnet.snippets file (which is located in the interactions folder). Before using the snippets, make sure to add your pem file in the root of the project under the name "wallet.pem" (or change the name to whichever one you wish to use in the interaction snippets). If you need info about how to derive a pem file you can find them [here](https://docs.multiversx.com/sdk-and-tools/sdk-py/deriving-the-wallet-pem-file). To run the functions from the interaction file, one can use:
 
 ```shell
     source interaction/devnet.snippets.sh
