@@ -7,7 +7,7 @@ pub enum ClaimType {
     Reward,
     Airdrop,
     Allocation,
-    Royalties,
+    Royalty,
 }
 
 // Trait used to define the maximum value of the ClaimType enumeration
@@ -29,7 +29,7 @@ impl From<u8> for ClaimType {
             0 => ClaimType::Reward,
             1 => ClaimType::Airdrop,
             2 => ClaimType::Allocation,
-            3 => ClaimType::Royalties,
+            3 => ClaimType::Royalty,
             _ => ClaimType::Reward,
         }
     }

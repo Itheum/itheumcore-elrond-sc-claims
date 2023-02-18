@@ -910,7 +910,7 @@ fn add_claim_privileged_or_depositor_test() {
             0,
             &rust_biguint!(1_000),
             |sc| {
-                sc.add_claim(&managed_address!(user_addr), storage::ClaimType::Royalties);
+                sc.add_claim(&managed_address!(user_addr), storage::ClaimType::Royalty);
             },
         )
         .assert_ok();

@@ -12,3 +12,4 @@ commands.txt
 wallet.pem
 mxpy.data-storage.json
 deploy-devnet.interaction.json
+erdpy.data-storage.json

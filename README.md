@@ -1,8 +1,8 @@
-# Itheum Core Elrond - Claims Smart Contract
+# Itheum Core (MultiversX) Elrond - Claims Smart Contract
 
 ## Abstract
 
-The claims smart contract is the tool that stands at the heart of collaboration between Itheum and its community. Whether it's a reward for helping the project, an airdrop, some allocation of tokens or trading royalties, the claims smart contract is the tool that allows Itheum to give tokens to all community members that are using the Elrond blockchain.
+The claims smart contract is the tool that stands at the heart of collaboration between Itheum and its community. Whether it's a reward for helping the project, an airdrop, some allocation of tokens or trading royalties, the claims smart contract is the tool that allows Itheum to give tokens to all community members that are using the MultiversX blockchain.
 
 ## Introduction
 
@@ -10,15 +10,10 @@ This contract allows the owner of it to send tokens to the smart contract and re
 
 ## Prerequisites
 
-This documentation assumes the user has previous programming experience. Moreover, the user should have a basic understanding of the Elrond blockchain. If you are new to the blockchain, please refer to the [MultiversX documentation](https://docs.multiversx.com/). In order to develop Elrond smart contract related solutions, one needs to have installed [mxpy](https://docs.multiversx.com/sdk-and-tools/sdk-py/installing-mxpy/).
+This documentation assumes the user has previous programming experience. Moreover, the user should have a basic understanding of the MultiversX blockchain. If you are new to the blockchain, please refer to the [MultiversX documentation](https://docs.multiversx.com/). In order to develop MultiversX smart contract related solutions, one needs to have installed [mxpy](https://docs.multiversx.com/sdk-and-tools/sdk-py/installing-mxpy/).
 
-Understanding this document is also easier if one knows how [ESDT token transactions](https://docs.multiversx.com/tokens/esdt-tokens#transfers-to-a-smart-contract) are structured on the Elrond blockchain.
+Understanding this document is also easier if one knows how [ESDT token transactions](https://docs.multiversx.com/tokens/esdt-tokens#transfers-to-a-smart-contract) are structured on the MultiversX blockchain.
 
-## Itheum deployed claims contract addresses
-
-| Devnet                                                         | Mainnet          |
-| -------------------------------------------------------------- | ---------------- |
-| erd1qqqqqqqqqqqqqpgqtywnp7z0war94rpzk00p2n2wjwaws2xr7yqsejxy7f (V1) : (V2) | erd1qqqqqqqqqqqqqpgqnsmrn5q08eqth3fy8el87sgdj0mkhwdwl2jqnf59cg |
 
 ## Endpoints
 
@@ -211,6 +206,25 @@ Example with claim type: "harvestClaim@02"
 
 This smart contract, albeit being a simple one, aims to set the standard when it comes to the quality of testing and documentation for which smart contract developers should aim. The above average level of documentation present aims specifically to take advantage of our open source codebase in order to learn, contribute and take good practices from the smart contract.
 
+### Setting up dev environment (project development bootstrap)
+
+- Uses `multiversx-sc-* 0.39.5` SDK libs (see Cargo.toml)
+- Building requires minimum **mxpy 5.2.3** (newer version should also work but devs used 5.2.3). Check version using `mxpy --version`
+- To build the project, requires minimum Rust version `1.68.0-nightly`. Check your Rust version by running `rustc --version`. To update your Rust, run `rustup update`. To set to nightly run `rustup default nightly` (devs used 1.69.0-nightly)
+- After you make sure you have the minimum Rust version you can then begin development. After you clone repo and before you run build, deploy or run the tests - follow these steps
+
+```
+rustup default nightly
+mxpy deps install rust --overwrite
+cargo clean
+cargo build
+```
+
+- The above should all work without any errors, next you can successfully run the following command to build via mxpy: `mxpy contract build` 
+- mxpy may ask you to install `nodejs` and `wasm-opt` to optimize the build, if so then follow instructions given by mxpy and do this
+- You can now run the tests. See "How to test" section below
+- You can now update code as needed
+
 ### Architecture
 
 The Claims Smart Contract is structured in 5 files:
@@ -229,7 +243,7 @@ The tests are located in the tests folder, in the rust_tests file. In order to r
     cargo test --package claims --test rust_tests -- --nocapture
 ```
 
-Another way of running the tests is by using the rust-analyzer extension in Visual Studio Code, which is also very helpful for Elrond Smart Contract development. If one has the extension installed, they can go open and go to the top of the rust_tests file and click the Run Tests button.
+Another way of running the tests is by using the rust-analyzer extension in Visual Studio Code, which is also very helpful for MultiversX Smart Contract development. If one has the extension installed, they can go open and go to the top of the rust_tests file and click the Run Tests button.
 
 Note: In order to run the tests, one has to use the rust nightly version. One can switch to the nightly version by using:
 
