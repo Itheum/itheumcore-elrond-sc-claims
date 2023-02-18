@@ -45,7 +45,7 @@ pub trait ClaimsContract:
         self.harvest_paused_event(&caller);
     }
 
-    // Endpoint avbailable for the owner of the smart contract to resume claim harvesting. Cannot be called while harvesting is already unpaused.
+    // Endpoint available for the owner of the smart contract to resume claim harvesting. Cannot be called while harvesting is already unpaused.
     #[only_owner]
     #[endpoint(unpause)]
     fn unpause(&self) {
@@ -215,7 +215,7 @@ pub trait ClaimsContract:
     ) {
         self.require_claim_token_is_set();
 
-        // Panics if the user tries to add more than 200 claims per operation. Implemented in order to ensure
+        // Panics if the user tries to add more than 200 claims per operation.
         self.require_number_of_claims_in_bulk_is_valid(&claims.len());
 
         // Initialize the sum of claims to be removed to zero

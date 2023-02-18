@@ -19,14 +19,14 @@ pub trait EventsModule {
     fn privileged_address_added_event(&self, #[indexed] address: &ManagedAddress);
 
     // Emitted whenever the owner removes a privileged address
-    #[event("privledgedAddressRemoved")]
+    #[event("privilegedAddressRemoved")]
     fn privileged_address_removed_event(&self, #[indexed] address: &ManagedAddress);
 
-    // Emitted whenever the owner sets the Data NFT marketplace contract address
+    // Emitted whenever the owner sets the address (e.g. Data NFT marketplace contract)
     #[event("depositorAddressAdded")]
     fn depositor_address_added_event(&self, #[indexed] address: &ManagedAddress);
 
-    // Emitted whenever the owner clears the Data NFT marketplace contract address
+    // Emitted whenever the owner clears the address (e.g. Data NFT marketplace contract)
     #[event("depositorAddressRemoved")]
     fn depositor_address_removed_event(&self, #[indexed] address: &ManagedAddress);
 

@@ -26,7 +26,7 @@ pub trait RequirementsModule: storage::StorageModule {
         require!(current_claim >= amount, ERR_MORE_THAN_CLAIM);
     }
 
-    // Checks whether the number of claims added or removed is smaller than 200. Implemented in order to ensure no call will fail due to consuming more than the maxium gas allowed per transaciton on Elrond.
+    // Checks whether the number of claims added or removed is smaller than 200. Implemented in order to ensure no call will fail due to consuming more than the maximum gas allowed per transaction on Elrond.
     fn require_number_of_claims_in_bulk_is_valid(&self, number_of_claims: &usize) {
         require!(
             number_of_claims <= &MAX_NUMBER_OF_CLAIMS_PER_OPERATION,
@@ -43,7 +43,7 @@ pub trait RequirementsModule: storage::StorageModule {
         );
     }
 
-    // Checks whether the address has the Data NFTR Marketplace Special Rights
+    // Checks whether the address has the Data NFT Marketplace Special Rights
     fn require_address_has_deposit_rights(&self, address: &ManagedAddress) {
         require!(
             self.privileged_addresses().contains(address)
