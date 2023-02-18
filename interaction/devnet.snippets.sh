@@ -29,6 +29,12 @@ deploy(){
     mxpy data store --key=deployTransaction-devnet --value=${TRANSACTION}
 }
 
+# if you interact without calling deploy(), then you need to 1st run this to restore the vars from data
+restoreDeployData() {
+  TRANSACTION=$(mxpy data parse --file="./interaction/deploy-devnet.interaction.json" --expression="data['emittedTransactionHash']")
+  ADDRESS=$(mxpy data parse --file="./interaction/deploy-devnet.interaction.json" --expression="data['contractAddress']")
+}
+
 setClaimToken(){
     mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
