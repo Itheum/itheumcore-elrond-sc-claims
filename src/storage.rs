@@ -1,5 +1,5 @@
-elrond_wasm::imports!();
-elrond_wasm::derive_imports!();
+multiversx_sc::imports!();
+multiversx_sc::derive_imports!();
 
 // Enumeration used to define claim types and increase readability of the code
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, PartialEq, Clone, Debug, TypeAbi)]
@@ -7,10 +7,36 @@ pub enum ClaimType {
     Reward,
     Airdrop,
     Allocation,
+    Royalty,
+}
+
+// Trait used to define the maximum value of the ClaimType enumeration
+pub trait Len {
+    fn len() -> u8;
+}
+
+// Implementation of the Max trait for the ClaimType enumeration
+impl Len for ClaimType {
+    fn len() -> u8 {
+        4
+    }
+}
+
+// Implementation of the From trait for the ClaimType enumeration
+impl From<u8> for ClaimType {
+    fn from(claim_type: u8) -> Self {
+        match claim_type {
+            0 => ClaimType::Reward,
+            1 => ClaimType::Airdrop,
+            2 => ClaimType::Allocation,
+            3 => ClaimType::Royalty,
+            _ => ClaimType::Reward,
+        }
+    }
 }
 
 // Module that handles the common storage of the smart contract
-#[elrond_wasm::module]
+#[multiversx_sc::module]
 pub trait StorageModule {
     // Stores the token identifier of the token that is used for claims in the smart contract
     #[view(viewTokenIdentifier)]
@@ -40,4 +66,8 @@ pub trait StorageModule {
     #[view(viewPrivilegedAddresses)]
     #[storage_mapper("privilegedAddresses")]
     fn privileged_addresses(&self) -> SetMapper<ManagedAddress>;
+
+    #[view(viewDepositorAddresses)]
+    #[storage_mapper("depositorAddresses")]
+    fn depositor_addresses(&self) -> SetMapper<ManagedAddress>;
 }

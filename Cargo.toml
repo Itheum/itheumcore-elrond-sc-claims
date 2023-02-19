@@ -1,20 +1,13 @@
 [package]
 name = "claims"
-version = "0.0.0"
-authors = [ "you",]
-edition = "2018"
+version = "0.1.0"
+authors = ["Ovidiu Damian - Itheum"]
+edition = "2021"
 publish = false
 
 [lib]
 path = "src/lib.rs"
-
-[dev-dependencies]
-num-bigint = "0.4.2"
-num-traits = "0.2"
-hex = "0.4"
-
-[dependencies.elrond-wasm]
-version = "0.31.1"
-
-[dev-dependencies.elrond-wasm-debug]
-version = "0.31.1"
+[dependencies.multiversx-sc]
+version = "0.39.5"
+[dev-dependencies.multiversx-sc-scenario]
+version = "0.39.5"

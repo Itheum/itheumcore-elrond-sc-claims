@@ -3,14 +3,14 @@ CHAIN_ID="D"
 
 WALLET="./wallet.pem"
 
-ADDRESS=$(erdpy data load --key=address-devnet)
-DEPLOY_TRANSACTION=$(erdpy data load --key=deployTransaction-devnet)
+ADDRESS=$(mxpy data load --key=address-devnet)
+DEPLOY_TRANSACTION=$(mxpy data load --key=deployTransaction-devnet)
 
 TOKEN="ITHEUM-a61317"
 TOKEN_HEX="0x$(echo -n ${TOKEN} | xxd -p -u | tr -d '\n')"
 
 deploy(){
-    erdpy --verbose contract deploy \
+    mxpy --verbose contract deploy \
     --bytecode output/claims.wasm \
     --outfile deployOutput \
     --metadata-not-readable \
@@ -22,15 +22,21 @@ deploy(){
     --recall-nonce \
     --outfile="./interaction/deploy-devnet.interaction.json" || return
 
-    TRANSACTION=$(erdpy data parse --file="./interaction/deploy-devnet.interaction.json" --expression="data['emittedTransactionHash']")
-    ADDRESS=$(erdpy data parse --file="./interaction/deploy-devnet.interaction.json" --expression="data['contractAddress']")
+    TRANSACTION=$(mxpy data parse --file="./interaction/deploy-devnet.interaction.json" --expression="data['emittedTransactionHash']")
+    ADDRESS=$(mxpy data parse --file="./interaction/deploy-devnet.interaction.json" --expression="data['contractAddress']")
 
-    erdpy data store --key=address-devnet --value=${ADDRESS}
-    erdpy data store --key=deployTransaction-devnet --value=${TRANSACTION}
+    mxpy data store --key=address-devnet --value=${ADDRESS}
+    mxpy data store --key=deployTransaction-devnet --value=${TRANSACTION}
+}
+
+# if you interact without calling deploy(), then you need to 1st run this to restore the vars from data
+restoreDeployData() {
+  TRANSACTION=$(mxpy data parse --file="./interaction/deploy-devnet.interaction.json" --expression="data['emittedTransactionHash']")
+  ADDRESS=$(mxpy data parse --file="./interaction/deploy-devnet.interaction.json" --expression="data['contractAddress']")
 }
 
 setClaimToken(){
-    erdpy --verbose contract call ${ADDRESS} \
+    mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=6000000 \
@@ -42,7 +48,7 @@ setClaimToken(){
 }
 
 pause(){
-    erdpy --verbose contract call ${ADDRESS} \
+    mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=6000000 \
@@ -53,7 +59,7 @@ pause(){
 }
 
 unpause(){
-    erdpy --verbose contract call ${ADDRESS} \
+    mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=6000000 \
@@ -66,8 +72,8 @@ unpause(){
 addPrivilegedAddress(){
     # $1 = address to which to give privileges
 
-    address="0x$(erdpy wallet bech32 --decode ${1})"
-    erdpy --verbose contract call ${ADDRESS} \
+    address="0x$(mxpy wallet bech32 --decode ${1})"
+    mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=10000000 \
@@ -81,8 +87,8 @@ addPrivilegedAddress(){
 removePrivilegedAddress(){
     # $1 = address to which to remove privileges
 
-    address="0x$(erdpy wallet bech32 --decode ${1})"
-    erdpy --verbose contract call ${ADDRESS} \
+    address="0x$(mxpy wallet bech32 --decode ${1})"
+    mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=10000000 \
@@ -93,14 +99,44 @@ removePrivilegedAddress(){
     --send || return
 }
 
+addDepositorAddress(){
+    # $1 = address to which to give privileges
+
+    address="0x$(mxpy wallet bech32 --decode ${1})"
+    mxpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=10000000 \
+    --function "addDepositorAddress" \
+    --arguments $address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
+removeDepositorAddress(){
+    # $1 = address to which to remove privileges
+
+    address="0x$(mxpy wallet bech32 --decode ${1})"
+    mxpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=10000000 \
+    --function "removeDepositorAddress" \
+    --arguments $address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
 addClaim(){
     # $1 = amount to add to claim
     # $2 = address to which to attribute the claim
-    # $3 = claim type (0 = reward, 1 = aidrop, 2 = allocation)
+    # $3 = claim type (0 = reward, 1 = aidrop, 2 = allocation, 3 = royalties)
 
     method="0x$(echo -n 'addClaim' | xxd -p -u | tr -d '\n')"
-    address="0x$(erdpy wallet bech32 --decode ${2})"
-    erdpy --verbose contract call ${ADDRESS} \
+    address="0x$(mxpy wallet bech32 --decode ${2})"
+    mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=6000000 \
@@ -113,11 +149,11 @@ addClaim(){
 
 removeClaim(){
     # $1 = address from which to remove the claim
-    # $2 = claim type (0 = reward, 1 = aidrop, 2 = allocation)
+    # $2 = claim type (0 = reward, 1 = aidrop, 2 = allocation, 3 = royalties)
     # $3 = amount to remove from claim
 
-    address="0x$(erdpy wallet bech32 --decode ${1})"
-    erdpy --verbose contract call ${ADDRESS} \
+    address="0x$(mxpy wallet bech32 --decode ${1})"
+    mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=6000000 \
@@ -129,7 +165,7 @@ removeClaim(){
 }
 
 harvestAllClaims(){
-    erdpy --verbose contract call ${ADDRESS} \
+    mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=6000000 \
@@ -140,9 +176,9 @@ harvestAllClaims(){
 }
 
 harvestClaim(){
-    # $1 = claim type (0 = reward, 1 = aidrop, 3 = allocation)
+    # $1 = claim type (0 = reward, 1 = aidrop, 2 = allocation, 3 = royalties)
 
-    erdpy --verbose contract call ${ADDRESS} \
+    mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=6000000 \
