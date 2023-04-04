@@ -1,4 +1,4 @@
-PROXY=https://devnet-gateway.elrond.com
+PROXY=https://devnet-gateway.multiversx.com
 CHAIN_ID="D"
 
 WALLET="./wallet.pem"
