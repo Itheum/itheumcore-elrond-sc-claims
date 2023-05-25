@@ -13,3 +13,7 @@ wallet.pem
 mxpy.data-storage.json
 deploy-devnet.interaction.json
 erdpy.data-storage.json
+
+deployOutputMainnet
+mainnet.snippets.sh
+deploy-mainnet.interaction.json
