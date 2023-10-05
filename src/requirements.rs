@@ -52,4 +52,11 @@ pub trait RequirementsModule: storage::StorageModule {
             ERR_ADDRESS_NOT_AUTHORIZED
         );
     }
+
+    fn require_token_is_fungible(&self, payment: &EsdtTokenPayment) {
+        require!(
+            payment.token_type()==EsdtTokenType::Fungible,
+            ERR_TOKEN_IS_NOT_FUNGIBLE
+        );
+    }
 }

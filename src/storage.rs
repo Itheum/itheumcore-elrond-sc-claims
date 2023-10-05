@@ -49,6 +49,16 @@ pub trait StorageModule {
     fn claim(&self, address: &ManagedAddress, claim_type: &ClaimType)
         -> SingleValueMapper<BigUint>;
 
+    // Stores the ESDT claims received by the user 
+    #[view(viewThirdPartyTokenClaims)]
+    #[storage_mapper("thirdPartyTokenClaims")]
+    fn third_party_token_claims(&self, address: &ManagedAddress) -> MapMapper<TokenIdentifier,BigUint>;
+
+    // Stores the sum of EGLD claims received by the user
+    #[view(viewThirdPartyEgldClaim)]
+    #[storage_mapper("thirdPartyEgldClaim")]
+    fn third_party_egld_claim(&self, address: &ManagedAddress) -> SingleValueMapper<BigUint>;
+
     // Stores the last timestamp at which the claim has been modified by the owner for each address and claim type
     #[view(viewClaimModifyDate)]
     #[storage_mapper("claimDate")]
@@ -70,4 +80,8 @@ pub trait StorageModule {
     #[view(viewDepositorAddresses)]
     #[storage_mapper("depositorAddresses")]
     fn depositor_addresses(&self) -> SetMapper<ManagedAddress>;
+
+    #[view(getFactoryAddress)]
+    #[storage_mapper("factory_address")]
+    fn factory_address(&self) -> SingleValueMapper<ManagedAddress>;
 }

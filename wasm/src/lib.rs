@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           20
+// Endpoints:                           29
 // Async Callback (empty):               1
-// Total number of exported functions:  22
+// Total number of exported functions:  31
 
 #![no_std]
 
@@ -34,14 +34,23 @@ multiversx_sc_wasm_adapter::endpoints! {
         removeClaim => remove_claim
         removeClaims => remove_claims
         claim => harvest_claim
+        receiveDataNftRoyalties => receive_data_nft_royalties
         viewTokenIdentifier => claim_token
         viewClaim => claim
+        viewThirdPartyTokenClaims => third_party_token_claims
+        viewThirdPartyEgldClaim => third_party_egld_claim
         viewClaimModifyDate => claim_modify_date
         isPaused => is_paused
         viewPrivilegedAddresses => privileged_addresses
         viewDepositorAddresses => depositor_addresses
+        getFactoryAddress => factory_address
         viewClaims => view_claims
         viewClaimWithDate => view_claims_with_date
+        viewAllClaims => view_all_claims
+        factory_treasury_address => factory_treasury_address
+        factory_tax => factory_tax
+        factory_claims_contract_address => factory_claims_contract_address
+        factory_claims_token_identifier => factory_claims_token_identifier
     )
 }
 

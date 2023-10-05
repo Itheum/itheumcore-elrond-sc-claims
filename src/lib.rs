@@ -8,6 +8,7 @@ pub mod events;
 pub mod requirements;
 pub mod storage;
 pub mod views;
+pub mod factory;
 
 use crate::{
     constants::*,
@@ -20,6 +21,7 @@ pub trait ClaimsContract:
     + events::EventsModule
     + views::ViewsModule
     + requirements::RequirementsModule
+    + factory::FactoryContractProxyMethods
 {
     // When the smart contract is deployed claim harvesting is paused
     #[init]
@@ -263,6 +265,10 @@ pub trait ClaimsContract:
             self.claim(&caller, &what_type_to_claim)
                 .set(BigUint::zero());
             self.claim_collected_event(&caller, &what_type_to_claim, &claim);
+
+            if what_type_to_claim == ClaimType::Royalty {
+                self.claim_third_party_claims();
+            }
         } else {
             // Sets claim to the sum of all reserved tokens for the calling address.
             for claim_type in 0..ClaimType::len() {
@@ -276,9 +282,60 @@ pub trait ClaimsContract:
                 }
             }
             self.require_value_not_zero(&claim);
+
+            self.claim_third_party_claims();
         }
         // Send the amount of tokens harvested (all tokens of a given claim type or the sum for all claim types) to the calling address.
         let claim_token = self.claim_token().get();
         self.send().direct_esdt(&caller, &claim_token, 0, &claim);
+    }
+
+    #[payable("*")]
+    #[endpoint(receiveDataNftRoyalties)]
+    fn receive_data_nft_royalties(&self, address: &ManagedAddress){
+        let egld_payment = self.call_value().egld_value().clone_value();
+        let percentage_tax = self.factory_tax();
+        let treasury = self.factory_treasury_address();
+        if egld_payment == BigUint::zero() {
+            let tax = &egld_payment * &percentage_tax / &BigUint::from(10000u64);
+            self.send().direct_egld(&treasury, &tax);
+            self.third_party_egld_claim(address).update(|current_egld_claim| {
+                *current_egld_claim += &egld_payment - &tax;
+            });
+        }else{
+            let esdt_payments = self.call_value().all_esdt_transfers();
+            for payment in esdt_payments.iter() {
+                self.require_token_is_fungible(&payment);
+                let tax = &payment.amount * &percentage_tax / &BigUint::from(10000u64);
+                self.send().direct_esdt(&treasury, &payment.token_identifier, 0, &tax);
+                
+                let current_claim = self.third_party_token_claims(address).get(&payment.token_identifier);
+                if current_claim.is_none(){
+                    self.third_party_token_claims(address).insert(payment.token_identifier, &payment.amount - &tax);
+                }else{
+                    self.third_party_token_claims(address).insert(payment.token_identifier, &current_claim.unwrap() + &payment.amount - &tax);
+                }
+            }
+        }
+    }
+
+    fn claim_third_party_claims(&self){
+        let caller = self.blockchain().get_caller();
+        
+        let egld_royalties = self.third_party_egld_claim(&caller).get();
+        if egld_royalties > BigUint::zero() {
+            self.send().direct_egld(&caller, &egld_royalties);
+            self.third_party_egld_claim(&caller).set(BigUint::zero());
+            self.third_party_claim_collected_event(&caller, &EgldOrEsdtTokenIdentifier::egld(), &egld_royalties);
+        }
+
+        let esdt_royalties = self.third_party_token_claims(&caller);
+        if esdt_royalties.len() > 0 {
+            for (token, amount) in esdt_royalties.iter() {
+                self.send().direct_esdt(&caller, &token, 0, &amount);
+                self.third_party_claim_collected_event(&caller, &EgldOrEsdtTokenIdentifier::esdt(token), &amount);
+            }
+            self.third_party_token_claims(&caller).clear();
+        }
     }
 }

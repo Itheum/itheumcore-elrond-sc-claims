@@ -57,4 +57,12 @@ pub trait EventsModule {
         #[indexed] claim_type: &ClaimType,
         #[indexed] amount: &BigUint,
     );
+
+    #[event("thirdPartyClaimCollected")]
+    fn third_party_claim_collected_event(
+        &self,
+        #[indexed] address: &ManagedAddress,
+        #[indexed] token_identifier: &EgldOrEsdtTokenIdentifier,
+        #[indexed] amount: &BigUint,
+    );
 }

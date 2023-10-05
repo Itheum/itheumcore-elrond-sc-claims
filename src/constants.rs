@@ -22,3 +22,4 @@ pub const ERR_MAX_NUMBER_OF_PRIVILEGED_ADDRESSES: &str =
 pub const ERR_OWNER_NOT_PRIVILEGED: &str = "Owner cannot be added to priviledged addresses";
 pub const ERR_OWNER_NOT_DEPOSITOR: &str = "Owner cannot be added to depositor addresses";
 pub const ERR_CLAIM_EQUAL_PAYMENT: &str = "Claims added must equal payment amount";
+pub const ERR_TOKEN_IS_NOT_FUNGIBLE: &str = "Payment token is not fungible";

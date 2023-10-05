@@ -10,6 +10,17 @@ pub struct Claim<M: ManagedTypeApi> {
     pub date: u64,
 }
 
+
+#[derive(ManagedVecItem, Clone, NestedEncode, NestedDecode, TopEncode, TopDecode, TypeAbi)]
+pub struct ClaimsOut<M: ManagedTypeApi> {
+    pub reward: BigUint<M>,
+    pub airdrop: BigUint<M>,
+    pub allocation: BigUint<M>,
+    pub royalty: BigUint<M>,
+    pub third_party_egld: BigUint<M>,
+    pub third_party_esdt: ManagedVec<M, EsdtTokenPayment<M>>,
+}
+
 // Module that implements views, by which we understand read-only endpoints
 #[multiversx_sc::module]
 pub trait ViewsModule: storage::StorageModule {
@@ -36,6 +47,22 @@ pub trait ViewsModule: storage::StorageModule {
                     .get(),
             });
         }
+
+        claims
+    }
+
+    #[view(viewAllClaims)]
+    fn view_all_claims(&self, address: &ManagedAddress) -> ClaimsOut<Self::Api>{
+        let claims = ClaimsOut {
+            reward: self.claim(address, &ClaimType::Reward).get(),
+            airdrop: self.claim(address, &ClaimType::Airdrop).get(),
+            allocation: self.claim(address, &ClaimType::Allocation).get(),
+            royalty: self.claim(address, &ClaimType::Royalty).get(),
+            third_party_egld: self.third_party_egld_claim(address).get(),
+            third_party_esdt: self.third_party_token_claims(address).iter().map(
+                |(token, amount)|
+                EsdtTokenPayment::new(token, 0u64, amount)).collect::<ManagedVec<EsdtTokenPayment>>(),
+        };
 
         claims
     }
