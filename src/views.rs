@@ -51,6 +51,7 @@ pub trait ViewsModule: storage::StorageModule {
         claims
     }
 
+    // View that returns all claim amounts 
     #[view(viewAllClaims)]
     fn view_all_claims(&self, address: &ManagedAddress) -> ClaimsOut<Self::Api>{
         let claims = ClaimsOut {

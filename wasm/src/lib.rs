@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           29
+// Endpoints:                           30
 // Async Callback (empty):               1
-// Total number of exported functions:  31
+// Total number of exported functions:  32
 
 #![no_std]
 
@@ -29,6 +29,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         removePrivilegedAddress => remove_privileged_address
         addDepositorAddress => add_depositor_address
         removeDepositorAddress => remove_depositor_address
+        setFactoryAddress => set_factory_address
         addClaim => add_claim
         addClaims => add_claims
         removeClaim => remove_claim

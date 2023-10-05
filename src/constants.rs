@@ -23,3 +23,4 @@ pub const ERR_OWNER_NOT_PRIVILEGED: &str = "Owner cannot be added to priviledged
 pub const ERR_OWNER_NOT_DEPOSITOR: &str = "Owner cannot be added to depositor addresses";
 pub const ERR_CLAIM_EQUAL_PAYMENT: &str = "Claims added must equal payment amount";
 pub const ERR_TOKEN_IS_NOT_FUNGIBLE: &str = "Payment token is not fungible";
+pub const ERR_FACTORY_ADDRESS_NOT_SET: &str = "Factory address is not set";

@@ -53,10 +53,19 @@ pub trait RequirementsModule: storage::StorageModule {
         );
     }
 
+    // Checks whether a token is of a fungible type
     fn require_token_is_fungible(&self, payment: &EsdtTokenPayment) {
         require!(
             payment.token_type()==EsdtTokenType::Fungible,
             ERR_TOKEN_IS_NOT_FUNGIBLE
+        );
+    }
+
+    // Checks whether the factory address is set
+    fn require_factory_address_is_set(&self) {
+        require!(
+            !self.factory_address().is_empty(),
+            ERR_FACTORY_ADDRESS_NOT_SET
         );
     }
 }

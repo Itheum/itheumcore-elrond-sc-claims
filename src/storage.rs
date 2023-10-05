@@ -73,14 +73,17 @@ pub trait StorageModule {
     #[storage_mapper("isPaused")]
     fn is_paused(&self) -> SingleValueMapper<bool>;
 
+    // Stores the addresses that have special rights in the smart contract
     #[view(viewPrivilegedAddresses)]
     #[storage_mapper("privilegedAddresses")]
     fn privileged_addresses(&self) -> SetMapper<ManagedAddress>;
 
+    // Stores the addresses that have deposit rights in the smart contract
     #[view(viewDepositorAddresses)]
     #[storage_mapper("depositorAddresses")]
     fn depositor_addresses(&self) -> SetMapper<ManagedAddress>;
 
+    // Stores the address of the Data NFT Minter factory contract proxy
     #[view(getFactoryAddress)]
     #[storage_mapper("factory_address")]
     fn factory_address(&self) -> SingleValueMapper<ManagedAddress>;

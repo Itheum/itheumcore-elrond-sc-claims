@@ -1,6 +1,7 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
+// Factory of Data NFT Minter contract proxy
 mod factory_contract_proxy {
 
     multiversx_sc::imports!();

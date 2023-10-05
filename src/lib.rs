@@ -122,6 +122,13 @@ pub trait ClaimsContract:
         depositor_addresses.remove(&address);
     }
 
+    // Endpoint available for owner in order to change the factory address
+    #[only_owner]
+    #[endpoint(setFactoryAddress)]
+    fn set_factory_address(&self, address: &ManagedAddress) {
+        self.factory_address().set(address);
+    }
+
     // Endpoint available for privileged addresses of the smart contract to add a claim of a specific claim type for a specific address.
     #[payable("*")]
     #[endpoint(addClaim)]
@@ -267,7 +274,7 @@ pub trait ClaimsContract:
             self.claim_collected_event(&caller, &what_type_to_claim, &claim);
 
             if what_type_to_claim == ClaimType::Royalty {
-                self.claim_third_party_claims();
+                self.collect_third_party_claims();
             }
         } else {
             // Sets claim to the sum of all reserved tokens for the calling address.
@@ -283,25 +290,30 @@ pub trait ClaimsContract:
             }
             self.require_value_not_zero(&claim);
 
-            self.claim_third_party_claims();
+            self.collect_third_party_claims();
         }
         // Send the amount of tokens harvested (all tokens of a given claim type or the sum for all claim types) to the calling address.
         let claim_token = self.claim_token().get();
         self.send().direct_esdt(&caller, &claim_token, 0, &claim);
     }
 
+    // Endpoint that can be used by third party smart contracts to send royalties to their rightful creator instead of the Itheum Minter. Can be called by anyone.
+    // Only receives the address for which to add the claims as an argument
     #[payable("*")]
     #[endpoint(receiveDataNftRoyalties)]
     fn receive_data_nft_royalties(&self, address: &ManagedAddress){
+        self.require_factory_address_is_set();
         let egld_payment = self.call_value().egld_value().clone_value();
         let percentage_tax = self.factory_tax();
         let treasury = self.factory_treasury_address();
+        let caller = self.blockchain().get_caller();
         if egld_payment == BigUint::zero() {
             let tax = &egld_payment * &percentage_tax / &BigUint::from(10000u64);
             self.send().direct_egld(&treasury, &tax);
             self.third_party_egld_claim(address).update(|current_egld_claim| {
                 *current_egld_claim += &egld_payment - &tax;
             });
+            self.third_party_claim_added_event(&caller, &address, &EgldOrEsdtTokenIdentifier::egld(), &egld_payment)
         }else{
             let esdt_payments = self.call_value().all_esdt_transfers();
             for payment in esdt_payments.iter() {
@@ -310,16 +322,18 @@ pub trait ClaimsContract:
                 self.send().direct_esdt(&treasury, &payment.token_identifier, 0, &tax);
                 
                 let current_claim = self.third_party_token_claims(address).get(&payment.token_identifier);
+                self.third_party_claim_added_event(&caller, &address, &EgldOrEsdtTokenIdentifier::esdt(payment.token_identifier.clone()), &(&payment.amount - &tax));
                 if current_claim.is_none(){
                     self.third_party_token_claims(address).insert(payment.token_identifier, &payment.amount - &tax);
                 }else{
                     self.third_party_token_claims(address).insert(payment.token_identifier, &current_claim.unwrap() + &payment.amount - &tax);
                 }
+                
             }
         }
     }
 
-    fn claim_third_party_claims(&self){
+    fn collect_third_party_claims(&self){
         let caller = self.blockchain().get_caller();
         
         let egld_royalties = self.third_party_egld_claim(&caller).get();

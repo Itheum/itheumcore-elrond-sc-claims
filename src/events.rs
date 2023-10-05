@@ -58,6 +58,17 @@ pub trait EventsModule {
         #[indexed] amount: &BigUint,
     );
 
+    // Emitted whenever a third party claim is added to the smart contract
+    #[event("thirdPartyClaimAdded")]
+    fn third_party_claim_added_event(
+        &self,
+        #[indexed] adder: &ManagedAddress,
+        #[indexed] address: &ManagedAddress,
+        #[indexed] token_identifier: &EgldOrEsdtTokenIdentifier,
+        #[indexed] amount: &BigUint,
+    );
+
+    // Emitted whenever a third party claim is collected
     #[event("thirdPartyClaimCollected")]
     fn third_party_claim_collected_event(
         &self,
