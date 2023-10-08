@@ -47,7 +47,13 @@ where
     blockchain_wrapper.set_esdt_balance(&first_user_address, TOKEN_ID, &rust_biguint!(1_000));
     blockchain_wrapper.set_esdt_balance(&second_user_address, TOKEN_ID, &rust_biguint!(0));
     blockchain_wrapper.set_esdt_balance(&third_user_address, TOKEN_ID, &rust_biguint!(1_000));
-
+    
+    blockchain_wrapper
+        .execute_tx(&owner_address, &cf_wrapper, &rust_zero, |sc| {
+            sc.set_factory_address(&managed_address!(&owner_address));
+        })
+        .assert_ok();
+    
     blockchain_wrapper
         .execute_tx(&owner_address, &cf_wrapper, &rust_zero, |sc| {
             sc.init();
@@ -111,9 +117,9 @@ fn deploy_test() {
         .assert_ok();
 }
 
-#[test] //Tests wether pausing and unpausing the contract works correctly
-        //Tests wether trying to change the pause state to the already set state returns an error
-        //Tests wether privileged addresses can pause harvesting, but normal or depositors addresses cannnot
+#[test] //Tests whether pausing and unpausing the contract works correctly
+        //Tests whether trying to change the pause state to the already set state returns an error
+        //Tests whether privileged addresses can pause harvesting, but normal or depositors addresses cannnot
 fn pause_unpause_test() {
     let mut setup = setup_contract(claims::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
@@ -241,7 +247,7 @@ fn pause_unpause_test() {
         .assert_ok();
 }
 
-#[test] //Tests wether adding and removing privileged addresses works as expected
+#[test] //Tests whether adding and removing privileged addresses works as expected
         //Tests if trying to adde more privileged addresses than the max number of privileged addresses returns an error
         //Tests if trying give privileges to an address that already has them returns an error
         //Tests if trying to offer privileges to the owner of the smart contract returns an error
@@ -330,7 +336,76 @@ fn add_and_remove_privileged_addresses_test() {
         .assert_ok();
 }
 
-#[test] //Tests wether adding and removing depositor addresses works as expected
+#[test] //Tests whether adding and removing third party addresses works as expected
+        //Tests if trying to authorize an address that is already authorized returns an error
+        //Tests if trying to authorize the owner of the smart contract returns an error
+        //Tests if trying to unauthorize an address that is not authorized returns an error
+fn add_and_remove_third_party_addresses_test() {
+    let mut setup = setup_contract(claims::contract_obj);
+    let b_wrapper = &mut setup.blockchain_wrapper;
+    let owner_address = &setup.owner_address;
+    let second_user_addr = &setup.second_user_address;
+    let third_user_addr = &setup.third_user_address;
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.authorize_third_party_address(managed_address!(second_user_addr));
+            },
+        )
+        .assert_ok();
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.unauthorize_third_party_address(managed_address!(third_user_addr));
+            },
+        )
+        .assert_user_error(ERR_ADDRESS_NOT_AUTHORIZED);
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.authorized_third_parties().contains(&managed_address!(second_user_addr)),
+                true
+            );
+        })
+        .assert_ok();
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.unauthorize_third_party_address(managed_address!(second_user_addr));
+            },
+        )
+        .assert_ok();
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.authorize_third_party_address(managed_address!(owner_address));
+            },
+        )
+        .assert_user_error(ERR_OWNER_NOT_THIRD_PARTY);
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.authorized_third_parties().contains(&managed_address!(second_user_addr)),
+                false
+            );
+        })
+        .assert_ok();
+}
+
+#[test] //Tests whether adding and removing depositor addresses works as expected
         //Tests if trying give depositor to an address that already has them returns an error
         //Tests if trying to offer depositor to the owner of the smart contract returns an error
         //Tests if trying to remove the depositor that is not depositor returns an error
@@ -408,7 +483,7 @@ fn add_and_remove_depositor_addresses_test() {
         .assert_ok();
 }
 
-#[test] //Tests wether adding and removing singular claims works as expected
+#[test] //Tests whether adding and removing singular claims works as expected
         //Tests if adding and removing a zero value claim returns an error
         //Tests if removing more than the amount reserved in claims returns an error
 fn add_and_remove_claim_test() {
@@ -879,7 +954,7 @@ fn add_and_remove_claims_test() {
         .assert_ok();
 }
 
-#[test] //Tests wether privileged addresses or depositors can add a claim, but a non-priviledged address cannot
+#[test] //Tests whether privileged addresses or depositors can add a claim, but a non-priviledged address cannot
 fn add_claim_privileged_or_depositor_test() {
     let mut setup = setup_contract(claims::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
@@ -929,7 +1004,7 @@ fn add_claim_privileged_or_depositor_test() {
         .assert_user_error(ERR_ADDRESS_NOT_AUTHORIZED);
 }
 
-#[test] //Tests wether privileged addresses or depositors can add claims, but a non-priviledged address cannot
+#[test] //Tests whether privileged addresses or depositors can add claims, but a non-priviledged address cannot
 fn add_claims_privileged_or_depositor_test() {
     let mut setup = setup_contract(claims::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
@@ -1222,7 +1297,7 @@ fn harvest_claim_test() {
     b_wrapper.check_esdt_balance(user_addr, TOKEN_ID, &rust_biguint!(1_000_000));
 }
 
-#[test] //Test wether the transaction to claim returns an error if no claims are present for the user for the type he tries to claim
+#[test] //Test whether the transaction to claim returns an error if no claims are present for the user for the type he tries to claim
 fn harvest_wrong_claim_type_test() {
     let mut setup = setup_contract(claims::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
@@ -1346,3 +1421,95 @@ fn harvest_all_claims_test() {
 
     b_wrapper.check_esdt_balance(user_addr, TOKEN_ID, &rust_biguint!(2_000_000));
 }
+
+// #[test] //Tests whether authorized third party addresses can add a claim, but an unauthorized address cannot
+// fn authorized_third_pary_add_claim_test() {
+//     let mut setup = setup_contract(claims::contract_obj);
+//     let b_wrapper = &mut setup.blockchain_wrapper;
+//     let owner_address = &setup.owner_address;
+//     let user_addr = &setup.first_user_address;
+//     let user_addr_2 = &setup.second_user_address;
+//     let user_addr_3 = &setup.third_user_address;
+
+//     b_wrapper.set_esdt_balance(user_addr_2, TOKEN_ID, &rust_biguint!(1_000));
+//     b_wrapper.set_esdt_balance(user_addr_2, WRONG_TOKEN_ID, &rust_biguint!(1_000));
+//     b_wrapper.set_egld_balance(user_addr_2, &rust_biguint!(1_000));
+//     b_wrapper
+//     .execute_tx(
+//         &owner_address,
+//         &setup.contract_wrapper,
+//         &rust_biguint!(0),
+//         |sc| {
+//             sc.authorize_third_party_address(managed_address!(user_addr_2));
+//         },
+//     )
+//     .assert_ok();
+
+//     b_wrapper
+//         .execute_esdt_transfer(
+//             user_addr_2,
+//             &setup.contract_wrapper,
+//             TOKEN_ID,
+//             0,
+//             &rust_biguint!(700),
+//             |sc| {
+//                 sc.add_third_party_claim(&managed_address!(user_addr));
+//             },
+//         )
+//         .assert_ok();
+
+//     b_wrapper
+//         .execute_tx(
+//             user_addr_2,
+//             &setup.contract_wrapper,
+//             &rust_biguint!(1_000),
+//             |sc| {
+//                 sc.add_third_party_claim(&managed_address!(user_addr));
+//             },
+//         )
+//         .assert_ok();
+
+//     b_wrapper
+//         .execute_esdt_transfer(
+//             user_addr_2,
+//             &setup.contract_wrapper,
+//             WRONG_TOKEN_ID,
+//             0,
+//             &rust_biguint!(1_000),
+//             |sc| {
+//                 sc.add_third_party_claim(&managed_address!(user_addr));
+//             },
+//         )
+//         .assert_ok();
+
+//     b_wrapper
+//         .execute_esdt_transfer(
+//             user_addr,
+//             &setup.contract_wrapper,
+//             TOKEN_ID,
+//             0,
+//             &rust_biguint!(1_000),
+//             |sc| {
+//                 sc.add_third_party_claim(&managed_address!(user_addr_2));
+//             },
+//         )
+//         .assert_user_error(ERR_ADDRESS_NOT_AUTHORIZED);
+
+//     b_wrapper
+//         .execute_query(&setup.contract_wrapper, |sc| {
+//             assert_eq!(
+//                 sc.third_party_egld_claim(&managed_address!(user_addr)).get(),
+//                 1_000
+//             );
+//         })
+//         .assert_ok();
+
+//     b_wrapper
+//         .execute_query(&setup.contract_wrapper, |sc| {
+//             assert_eq!(
+//                 sc.third_party_token_claims(&managed_address!(user_addr)).get(&managed_token_id!(TOKEN_ID)),
+//                 Option::from(managed_biguint!(1_000))
+//             );
+//         })
+//         .assert_ok();
+// }

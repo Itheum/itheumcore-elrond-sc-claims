@@ -122,6 +122,37 @@ pub trait ClaimsContract:
         depositor_addresses.remove(&address);
     }
 
+    // Endpoint available for owner in order to add an authorized third party
+    #[only_owner]
+    #[endpoint(authorizeThirdParty)]
+    fn authorize_third_party_address(&self, address: ManagedAddress) {
+        let mut third_parties = self.authorized_third_parties();
+        require!(
+            !third_parties.contains(&address),
+            ERR_ADDRESS_THIRD_PARTY
+        );
+
+        let owner = self.blockchain().get_owner_address();
+        require!(owner != address, ERR_OWNER_NOT_THIRD_PARTY);
+
+        self.third_party_address_authorized_event(&address);
+        third_parties.insert(address);
+    }
+
+    // Endpoint available for owner in order to remove an authorized third party
+    #[only_owner]
+    #[endpoint(unauthorizeThirdParty)]
+    fn unauthorize_third_party_address(&self, address: ManagedAddress) {
+        let mut third_parties = self.authorized_third_parties();
+        require!(
+            third_parties.contains(&address),
+            ERR_ADDRESS_NOT_AUTHORIZED
+        );
+
+        self.third_party_address_unauthorized_event(&address);
+        third_parties.remove(&address);
+    }
+
     // Endpoint available for owner in order to change the factory address
     #[only_owner]
     #[endpoint(setFactoryAddress)]
@@ -273,6 +304,7 @@ pub trait ClaimsContract:
                 .set(BigUint::zero());
             self.claim_collected_event(&caller, &what_type_to_claim, &claim);
 
+            // If user is collection royalties also claim
             if what_type_to_claim == ClaimType::Royalty {
                 self.collect_third_party_claims();
             }
@@ -300,42 +332,62 @@ pub trait ClaimsContract:
     // Endpoint that can be used by third party smart contracts to send royalties to their rightful creator instead of the Itheum Minter. Can be called by anyone.
     // Only receives the address for which to add the claims as an argument
     #[payable("*")]
-    #[endpoint(receiveDataNftRoyalties)]
-    fn receive_data_nft_royalties(&self, address: &ManagedAddress){
+    #[endpoint(addThirdPartyClaim)]
+    fn add_third_party_claim(&self, address: &ManagedAddress){
         self.require_factory_address_is_set();
+
+        let caller = self.blockchain().get_caller();
+        self.require_address_is_authorized_third_party(&caller);
+
         let egld_payment = self.call_value().egld_value().clone_value();
         let percentage_tax = self.factory_tax();
         let treasury = self.factory_treasury_address();
-        let caller = self.blockchain().get_caller();
+        let timestamp = self.blockchain().get_block_timestamp();
+
+        // Check if there is an eGLD or ESDT(s) payment (can't be both at the same time)
         if egld_payment == BigUint::zero() {
+
+            // Calculate and send tax to the Itheum Treasury
             let tax = &egld_payment * &percentage_tax / &BigUint::from(10000u64);
             self.send().direct_egld(&treasury, &tax);
+
+            // Update third party claim
             self.third_party_egld_claim(address).update(|current_egld_claim| {
                 *current_egld_claim += &egld_payment - &tax;
             });
-            self.third_party_claim_added_event(&caller, &address, &EgldOrEsdtTokenIdentifier::egld(), &egld_payment)
+            self.third_party_claim_added_event(&caller, &address, &EgldOrEsdtTokenIdentifier::egld(), &egld_payment);
+            self.third_party_claim_modify_date(&address, &EgldOrEsdtTokenIdentifier::egld()).set(&timestamp);
+
         }else{
+
+            // Loop through payments in case there are multiple
             let esdt_payments = self.call_value().all_esdt_transfers();
             for payment in esdt_payments.iter() {
                 self.require_token_is_fungible(&payment);
+
+                // Calculate and send tax to the Itheum Treasury for each ESDT payment
                 let tax = &payment.amount * &percentage_tax / &BigUint::from(10000u64);
                 self.send().direct_esdt(&treasury, &payment.token_identifier, 0, &tax);
-                
+
+                // Update third party claim
                 let current_claim = self.third_party_token_claims(address).get(&payment.token_identifier);
-                self.third_party_claim_added_event(&caller, &address, &EgldOrEsdtTokenIdentifier::esdt(payment.token_identifier.clone()), &(&payment.amount - &tax));
+                let egld_or_esdt_token = EgldOrEsdtTokenIdentifier::esdt(payment.token_identifier.clone());
+                self.third_party_claim_added_event(&caller, &address, &egld_or_esdt_token, &(&payment.amount - &tax));
+                self.third_party_claim_modify_date(&address, &egld_or_esdt_token).set(&timestamp);
                 if current_claim.is_none(){
                     self.third_party_token_claims(address).insert(payment.token_identifier, &payment.amount - &tax);
                 }else{
                     self.third_party_token_claims(address).insert(payment.token_identifier, &current_claim.unwrap() + &payment.amount - &tax);
                 }
-                
             }
         }
     }
 
+    // Non-endpoint function aiming to abstractize the logic of collecting third party claims
     fn collect_third_party_claims(&self){
         let caller = self.blockchain().get_caller();
         
+        // Collect eGLD third party claims
         let egld_royalties = self.third_party_egld_claim(&caller).get();
         if egld_royalties > BigUint::zero() {
             self.send().direct_egld(&caller, &egld_royalties);
@@ -343,6 +395,7 @@ pub trait ClaimsContract:
             self.third_party_claim_collected_event(&caller, &EgldOrEsdtTokenIdentifier::egld(), &egld_royalties);
         }
 
+        // Collect ESDT third party claims
         let esdt_royalties = self.third_party_token_claims(&caller);
         if esdt_royalties.len() > 0 {
             for (token, amount) in esdt_royalties.iter() {

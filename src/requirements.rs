@@ -43,6 +43,15 @@ pub trait RequirementsModule: storage::StorageModule {
         );
     }
 
+    // Checks whether the address is an authorized third party
+    fn require_address_is_authorized_third_party(&self, address: &ManagedAddress) {
+        require!(
+            self.authorized_third_parties().contains(address)
+                || &self.blockchain().get_owner_address() == address,
+            ERR_ADDRESS_NOT_AUTHORIZED
+        );
+    }
+
     // Checks whether the address has the Data NFT Marketplace Special Rights
     fn require_address_has_deposit_rights(&self, address: &ManagedAddress) {
         require!(

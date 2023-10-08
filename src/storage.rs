@@ -68,6 +68,15 @@ pub trait StorageModule {
         claim_type: &ClaimType,
     ) -> SingleValueMapper<u64>;
 
+    // Stores the last timestamp at which the claim has been modified by a third party for each address and token
+    #[view(viewThirdPartyClaimModifyDate)]
+    #[storage_mapper("thirdPartyclaimDate")]
+    fn third_party_claim_modify_date(
+        &self,
+        address: &ManagedAddress,
+        token: &EgldOrEsdtTokenIdentifier,
+    ) -> SingleValueMapper<u64>;
+
     // Stores whether claim harvesting is paused or not
     #[view(isPaused)]
     #[storage_mapper("isPaused")]
@@ -87,4 +96,8 @@ pub trait StorageModule {
     #[view(getFactoryAddress)]
     #[storage_mapper("factory_address")]
     fn factory_address(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[view(getAuthorizedThirdParties)]
+    #[storage_mapper("authorizedThirdParties")]
+    fn authorized_third_parties(&self) -> SetMapper<ManagedAddress>;
 }

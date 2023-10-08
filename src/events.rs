@@ -30,6 +30,14 @@ pub trait EventsModule {
     #[event("depositorAddressRemoved")]
     fn depositor_address_removed_event(&self, #[indexed] address: &ManagedAddress);
 
+    // Emitted whenever the owner authorizes a third party  (e.g. marketplace contract)
+    #[event("thirdPartyAddressAuthorized")]
+    fn third_party_address_authorized_event(&self, #[indexed] address: &ManagedAddress);
+
+    // Emitted whenever the owner unauthorizes a third party (e.g. marketplace contract)
+    #[event("thirdPartyAddressUnauthorized")]
+    fn third_party_address_unauthorized_event(&self, #[indexed] address: &ManagedAddress);
+
     // Emitted whenever a new claim is added to the smart contract
     #[event("claimAdded")]
     fn claim_added_event(

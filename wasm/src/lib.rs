@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           30
+// Endpoints:                           34
 // Async Callback (empty):               1
-// Total number of exported functions:  32
+// Total number of exported functions:  36
 
 #![no_std]
 
@@ -29,22 +29,26 @@ multiversx_sc_wasm_adapter::endpoints! {
         removePrivilegedAddress => remove_privileged_address
         addDepositorAddress => add_depositor_address
         removeDepositorAddress => remove_depositor_address
+        authorizeThirdParty => authorize_third_party_address
+        unauthorizeThirdParty => unauthorize_third_party_address
         setFactoryAddress => set_factory_address
         addClaim => add_claim
         addClaims => add_claims
         removeClaim => remove_claim
         removeClaims => remove_claims
         claim => harvest_claim
-        receiveDataNftRoyalties => receive_data_nft_royalties
+        addThirdPartyClaim => add_third_party_claim
         viewTokenIdentifier => claim_token
         viewClaim => claim
         viewThirdPartyTokenClaims => third_party_token_claims
         viewThirdPartyEgldClaim => third_party_egld_claim
         viewClaimModifyDate => claim_modify_date
+        viewThirdPartyClaimModifyDate => third_party_claim_modify_date
         isPaused => is_paused
         viewPrivilegedAddresses => privileged_addresses
         viewDepositorAddresses => depositor_addresses
         getFactoryAddress => factory_address
+        getAuthorizedThirdParties => authorized_third_parties
         viewClaims => view_claims
         viewClaimWithDate => view_claims_with_date
         viewAllClaims => view_all_claims

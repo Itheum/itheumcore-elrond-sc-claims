@@ -14,6 +14,7 @@ pub const ERR_CONTRACT_ALREADY_PAUSED: &str = "Contract is already paused";
 pub const ERR_CONTRACT_ALREADY_UNPAUSED: &str = "Contract is already unpaused";
 pub const ERR_ADDRESS_PRIVILEGED: &str = "Address is already privileged";
 pub const ERR_ADDRESS_DEPOSITOR: &str = "Address is already a depositor";
+pub const ERR_ADDRESS_THIRD_PARTY: &str = "Address is already an authorized third party";
 pub const ERR_ADDRESS_NOT_PRIVILEGED: &str = "Address is not privileged";
 pub const ERR_ADDRESS_NOT_DEPOSITOR: &str = "Address is not a depositor";
 pub const ERR_MAX_NUMBER_OF_PRIVILEGED_ADDRESSES: &str =
@@ -21,6 +22,7 @@ pub const ERR_MAX_NUMBER_OF_PRIVILEGED_ADDRESSES: &str =
 
 pub const ERR_OWNER_NOT_PRIVILEGED: &str = "Owner cannot be added to priviledged addresses";
 pub const ERR_OWNER_NOT_DEPOSITOR: &str = "Owner cannot be added to depositor addresses";
+pub const ERR_OWNER_NOT_THIRD_PARTY: &str = "Owner cannot be added to third parties";
 pub const ERR_CLAIM_EQUAL_PAYMENT: &str = "Claims added must equal payment amount";
 pub const ERR_TOKEN_IS_NOT_FUNGIBLE: &str = "Payment token is not fungible";
 pub const ERR_FACTORY_ADDRESS_NOT_SET: &str = "Factory address is not set";
