@@ -304,11 +304,8 @@ pub trait ClaimsContract:
                 .set(BigUint::zero());
             self.claim_collected_event(&caller, &what_type_to_claim, &claim);
 
-            // If user is collection royalties also claim
-            if what_type_to_claim == ClaimType::Royalty {
-                self.collect_third_party_claims();
-            }
         } else {
+
             // Sets claim to the sum of all reserved tokens for the calling address.
             for claim_type in 0..ClaimType::len() {
                 let current_claim_type = ClaimType::from(claim_type);
@@ -321,8 +318,6 @@ pub trait ClaimsContract:
                 }
             }
             self.require_value_not_zero(&claim);
-
-            self.collect_third_party_claims();
         }
         // Send the amount of tokens harvested (all tokens of a given claim type or the sum for all claim types) to the calling address.
         let claim_token = self.claim_token().get();
@@ -383,13 +378,15 @@ pub trait ClaimsContract:
         }
     }
 
-    // Non-endpoint function aiming to abstractize the logic of collecting third party claims
-    fn collect_third_party_claims(&self){
+    // Public endpoint that can be called in order to collect third party claims from the contract
+    #[endpoint(claimThirdParty)]
+    fn harvest_third_party_claims(&self){
         let caller = self.blockchain().get_caller();
-        
+        let mut did_claim_anything = false;
         // Collect eGLD third party claims
         let egld_royalties = self.third_party_egld_claim(&caller).get();
         if egld_royalties > BigUint::zero() {
+            did_claim_anything = true;
             self.send().direct_egld(&caller, &egld_royalties);
             self.third_party_egld_claim(&caller).set(BigUint::zero());
             self.third_party_claim_collected_event(&caller, &EgldOrEsdtTokenIdentifier::egld(), &egld_royalties);
@@ -398,11 +395,13 @@ pub trait ClaimsContract:
         // Collect ESDT third party claims
         let esdt_royalties = self.third_party_token_claims(&caller);
         if esdt_royalties.len() > 0 {
+            did_claim_anything = false;
             for (token, amount) in esdt_royalties.iter() {
                 self.send().direct_esdt(&caller, &token, 0, &amount);
                 self.third_party_claim_collected_event(&caller, &EgldOrEsdtTokenIdentifier::esdt(token), &amount);
             }
             self.third_party_token_claims(&caller).clear();
         }
+        require!(did_claim_anything, ERR_NO_THIRD_PARTY_CLAIMS);
     }
 }

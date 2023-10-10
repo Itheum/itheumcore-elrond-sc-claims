@@ -240,6 +240,18 @@ Example without claim type: "harvestClaim"
 Call structure wit claim type: "harvestClaim" + "@" + claim type hex encoded
 Example with claim type: "harvestClaim@02"
 
+#### claimThirdParty
+
+```rust
+    #[endpoint(claimThirdParty)]
+    fn harvest_third_party_claims(&self);
+```
+
+Endpoint that allows anyone to harvest their designated claims inserted by an authorized third party. The call will fail if no third party claim is waiting to be harvested.
+
+Call structure: "claimThirdParty"
+Example: "claimThirdParty"
+
 ## Development
 
 This smart contract, albeit being a simple one, aims to set the standard when it comes to the quality of testing and documentation for which smart contract developers should aim. The above average level of documentation present aims specifically to take advantage of our open source codebase in order to learn, contribute and take good practices from the smart contract.

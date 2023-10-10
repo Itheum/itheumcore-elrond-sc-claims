@@ -245,7 +245,7 @@ removeClaim(){
     --send || return
 }
 
-harvestAllClaims(){
+harvestAllFirstPartyClaims(){
     mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
@@ -265,6 +265,17 @@ harvestClaim(){
     --gas-limit=6000000 \
     --function "claim" \
     --arguments $1 \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
+harvestThirdPartyClaims(){
+    mxpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=6000000 \
+    --function "claimThirdParty" \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --send || return
