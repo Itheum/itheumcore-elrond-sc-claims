@@ -259,6 +259,30 @@ addThirdPartyESDTClaim(){
     --send || return
 }
 
+addThirdPartyMultipleESDTClaim(){
+    # $1 = address you are using to send the transaction (your wallet address)
+    # $2 = token 1 to add to claim
+    # $3 = amount 1 to add to claim
+    # $4 = token 2 to add to claim
+    # $5 = amount 2 to add to claim
+    # $6 = address to which to attribute the claim
+
+    token_hex_1="0x$(echo -n ${2} | xxd -p -u | tr -d '\n')"
+    token_hex_2="0x$(echo -n ${4} | xxd -p -u | tr -d '\n')"
+    method="0x$(echo -n 'addThirdPartyClaim' | xxd -p -u | tr -d '\n')"
+    address="0x$(mxpy wallet bech32 --decode ${6})"
+    sc_address="0x$(mxpy wallet bech32 --decode ${ADDRESS})"
+    mxpy --verbose contract call ${1} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=20000000 \
+    --function "MultiESDTNFTTransfer" \
+    --arguments ${sc_address} 2 $token_hex_1 0 $3 $token_hex_2 0 $5 $method $address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
 addThirdPartyEGLDClaim(){
     # $1 = amount to add to claim
     # $2 = address to which to attribute the claim
