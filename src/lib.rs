@@ -340,7 +340,7 @@ pub trait ClaimsContract:
         let timestamp = self.blockchain().get_block_timestamp();
 
         // Check if there is an eGLD or ESDT(s) payment (can't be both at the same time)
-        if egld_payment == BigUint::zero() {
+        if egld_payment > BigUint::zero() {
 
             // Calculate and send tax to the Itheum Treasury
             let tax = &egld_payment * &percentage_tax / &BigUint::from(10000u64);
