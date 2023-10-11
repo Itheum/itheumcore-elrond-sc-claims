@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           35
+// Endpoints:                           36
 // Async Callback (empty):               1
-// Total number of exported functions:  37
+// Total number of exported functions:  38
 
 #![no_std]
 
@@ -53,6 +53,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         viewClaims => view_claims
         viewClaimWithDate => view_claims_with_date
         viewClaimsData => view_claims_data
+        viewFactoryData => view_factory_data
         factory_treasury_address => factory_treasury_address
         factory_tax => factory_tax
         factory_claims_contract_address => factory_claims_contract_address

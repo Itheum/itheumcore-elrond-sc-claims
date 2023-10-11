@@ -24,9 +24,6 @@ pub struct ClaimsData<M: ManagedTypeApi> {
     pub airdrop: Claim<M>,
     pub allocation: Claim<M>,
     pub royalty: Claim<M>,
-    pub factory_address: ManagedAddress<M>,
-    pub treasury_address: ManagedAddress<M>,
-    pub tax_percentage: BigUint<M>,
     pub third_party_egld: Claim<M>,
     pub third_party_esdt: ManagedVec<M, EsdtClaim<M>>,
 }
@@ -81,9 +78,6 @@ pub trait ViewsModule: storage::StorageModule + factory::FactoryContractProxyMet
                 amount: self.claim(address, &ClaimType::Royalty).get(),
                 date: self.claim_modify_date(address, &ClaimType::Royalty).get()
             },
-            factory_address: self.factory_address().get(),
-            treasury_address: self.factory_treasury_address(),
-            tax_percentage: self.factory_tax(),
             third_party_egld: Claim{
                 amount: self.third_party_egld_claim(address).get(),
                 date: self.third_party_claim_modify_date(address, &EgldOrEsdtTokenIdentifier::egld()).get()
@@ -98,5 +92,10 @@ pub trait ViewsModule: storage::StorageModule + factory::FactoryContractProxyMet
         };
 
         claims
+    }
+
+    #[view(viewFactoryData)]
+    fn view_factory_data(&self) -> MultiValue3<ManagedAddress,ManagedAddress,BigUint>{
+        MultiValue3((self.factory_address().get(),self.factory_treasury_address(),self.factory_tax()))
     }
 }
