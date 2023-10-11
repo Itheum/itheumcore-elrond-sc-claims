@@ -285,7 +285,7 @@ viewFactoryData(){
     mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
-    --gas-limit=6000000 \
+    --gas-limit=3000000 \
     --function "viewFactoryData" \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
