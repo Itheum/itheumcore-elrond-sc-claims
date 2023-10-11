@@ -33,6 +33,10 @@ deploy(){
 restoreDeployData() {
   TRANSACTION=$(mxpy data parse --file="./interaction/deploy-devnet.interaction.json" --expression="data['emittedTransactionHash']")
   ADDRESS=$(mxpy data parse --file="./interaction/deploy-devnet.interaction.json" --expression="data['contractAddress']")
+
+  # after we upgraded to mxpy 8.1.2, mxpy data parse seems to load the ADDRESS correctly but it breaks when used below with a weird "Bad address" error
+  # so, we just hardcode the ADDRESS here. Just make sure you use the "data['contractAddress'] from the latest deploy-devnet.interaction.json file
+  ADDRESS="erd1qqqqqqqqqqqqqpgqd8vswwygp8sgmm6rd2x4rfgxjvv4fa93fsxsks7y6q"
 }
 
 setClaimToken(){
@@ -69,21 +73,6 @@ unpause(){
     --send || return
 }
 
-setFactoryAddress(){
-    # $1 = address to set as factory
-
-    address="0x$(mxpy wallet bech32 --decode ${1})"
-    mxpy --verbose contract call ${ADDRESS} \
-    --recall-nonce \
-    --pem=${WALLET} \
-    --gas-limit=10000000 \
-    --function "setFactoryAddress" \
-    --arguments $address \
-    --proxy ${PROXY} \
-    --chain ${CHAIN_ID} \
-    --send || return
-}
-
 addPrivilegedAddress(){
     # $1 = address to which to give privileges
 
@@ -114,66 +103,6 @@ removePrivilegedAddress(){
     --send || return
 }
 
-addDepositorAddress(){
-    # $1 = address to which to give privileges
-
-    address="0x$(mxpy wallet bech32 --decode ${1})"
-    mxpy --verbose contract call ${ADDRESS} \
-    --recall-nonce \
-    --pem=${WALLET} \
-    --gas-limit=10000000 \
-    --function "addDepositorAddress" \
-    --arguments $address \
-    --proxy ${PROXY} \
-    --chain ${CHAIN_ID} \
-    --send || return
-}
-
-removeDepositorAddress(){
-    # $1 = address to which to remove privileges
-
-    address="0x$(mxpy wallet bech32 --decode ${1})"
-    mxpy --verbose contract call ${ADDRESS} \
-    --recall-nonce \
-    --pem=${WALLET} \
-    --gas-limit=10000000 \
-    --function "removeDepositorAddress" \
-    --arguments $address \
-    --proxy ${PROXY} \
-    --chain ${CHAIN_ID} \
-    --send || return
-}
-
-authorizeThirdParty(){
-    # $1 = address to authorize
-
-    address="0x$(mxpy wallet bech32 --decode ${1})"
-    mxpy --verbose contract call ${ADDRESS} \
-    --recall-nonce \
-    --pem=${WALLET} \
-    --gas-limit=10000000 \
-    --function "authorizeThirdParty" \
-    --arguments $address \
-    --proxy ${PROXY} \
-    --chain ${CHAIN_ID} \
-    --send || return
-}
-
-unauthorizeThirdParty(){
-    # $1 = address to unauthorize
-
-    address="0x$(mxpy wallet bech32 --decode ${1})"
-    mxpy --verbose contract call ${ADDRESS} \
-    --recall-nonce \
-    --pem=${WALLET} \
-    --gas-limit=10000000 \
-    --function "unauthorizeThirdParty" \
-    --arguments $address \
-    --proxy ${PROXY} \
-    --chain ${CHAIN_ID} \
-    --send || return
-}
-
 addClaim(){
     # $1 = amount to add to claim
     # $2 = address to which to attribute the claim
@@ -187,42 +116,6 @@ addClaim(){
     --gas-limit=6000000 \
     --function "ESDTTransfer" \
     --arguments ${TOKEN_HEX} $1 $method $address $3 \
-    --proxy ${PROXY} \
-    --chain ${CHAIN_ID} \
-    --send || return
-}
-
-addThirdPartyESDTClaim(){
-    # $1 = token to add to claim
-    # $2 = amount to add to claim
-    # $3 = address to which to attribute the claim
-
-    token_hex="0x$(echo -n ${1} | xxd -p -u | tr -d '\n')"
-    method="0x$(echo -n 'addThirdPartyClaim' | xxd -p -u | tr -d '\n')"
-    address="0x$(mxpy wallet bech32 --decode ${3})"
-    mxpy --verbose contract call ${ADDRESS} \
-    --recall-nonce \
-    --pem=${WALLET} \
-    --gas-limit=6000000 \
-    --function "ESDTTransfer" \
-    --arguments ${token_hex} $2 $method $address \
-    --proxy ${PROXY} \
-    --chain ${CHAIN_ID} \
-    --send || return
-}
-
-addThirdPartyEGLDClaim(){
-    # $1 = amount to add to claim
-    # $2 = address to which to attribute the claim
-
-    address="0x$(mxpy wallet bech32 --decode ${2})"
-    mxpy --verbose contract call ${ADDRESS} \
-    --recall-nonce \
-    --pem=${WALLET} \
-    --gas-limit=6000000 \
-    --function "addThirdPartyClaim" \
-    --arguments $address \
-    --value $1 \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --send || return
@@ -265,6 +158,119 @@ harvestClaim(){
     --gas-limit=6000000 \
     --function "claim" \
     --arguments $1 \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
+# v2.0.0
+addDepositorAddress(){
+    # $1 = address to which to give privileges
+
+    address="0x$(mxpy wallet bech32 --decode ${1})"
+    mxpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=10000000 \
+    --function "addDepositorAddress" \
+    --arguments $address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
+removeDepositorAddress(){
+    # $1 = address to which to remove privileges
+
+    address="0x$(mxpy wallet bech32 --decode ${1})"
+    mxpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=10000000 \
+    --function "removeDepositorAddress" \
+    --arguments $address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
+# v3.0.0
+setFactoryAddress(){
+    # $1 = address to set as factory
+
+    address="0x$(mxpy wallet bech32 --decode ${1})"
+    mxpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=10000000 \
+    --function "setFactoryAddress" \
+    --arguments $address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
+authorizeThirdParty(){
+    # $1 = address to authorize
+
+    address="0x$(mxpy wallet bech32 --decode ${1})"
+    mxpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=10000000 \
+    --function "authorizeThirdParty" \
+    --arguments $address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
+unauthorizeThirdParty(){
+    # $1 = address to unauthorize
+
+    address="0x$(mxpy wallet bech32 --decode ${1})"
+    mxpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=10000000 \
+    --function "unauthorizeThirdParty" \
+    --arguments $address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
+addThirdPartyESDTClaim(){
+    # $1 = token to add to claim
+    # $2 = amount to add to claim
+    # $3 = address to which to attribute the claim
+
+    token_hex="0x$(echo -n ${1} | xxd -p -u | tr -d '\n')"
+    method="0x$(echo -n 'addThirdPartyClaim' | xxd -p -u | tr -d '\n')"
+    address="0x$(mxpy wallet bech32 --decode ${3})"
+    mxpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=10000000 \
+    --function "ESDTTransfer" \
+    --arguments ${token_hex} $2 $method $address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
+addThirdPartyEGLDClaim(){
+    # $1 = amount to add to claim
+    # $2 = address to which to attribute the claim
+
+    address="0x$(mxpy wallet bech32 --decode ${2})"
+    mxpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=10000000 \
+    --function "addThirdPartyClaim" \
+    --arguments $address \
+    --value $1 \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --send || return

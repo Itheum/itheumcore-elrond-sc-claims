@@ -258,9 +258,10 @@ This smart contract, albeit being a simple one, aims to set the standard when it
 
 ### Setting up dev environment (project development bootstrap) + how to build
 
-- Uses `multiversx-sc-* 0.39.5` SDK libs (see Cargo.toml)
-- Building requires minimum **mxpy 6.1.1** (newer version should also work but devs used 6.1.1). Check version using `mxpy --version`
-- To build the project, requires minimum Rust version `1.68.0-nightly`. Check your Rust version by running `rustc --version`. To update your Rust, run `rustup update`. To set to nightly run `rustup default nightly` (devs used 1.69.0-nightly)
+- Note that these are also needed before upgrading where things like the MX libs have been changed from previous version
+- Uses `multiversx-sc-* 0.39.5` (starting v3.0.0, we used 0.43.4) SDK libs (see Cargo.toml)
+- Building requires minimum **mxpy 6.1.1** (starting v3.0.0, we used mxpy 8.1.2). Check version using `mxpy --version`
+- To build the project, requires minimum Rust version `1.68.0-nightly` (staring v3.0.0, we used 1.75.0-nightly). Check your Rust version by running `rustc --version`. To update your Rust, run `rustup update`. To set to nightly run `rustup default nightly` (devs used 1.69.0-nightly)
 - After you make sure you have the minimum Rust version you can then begin development. After you clone repo and before you run build, deploy or run the tests - follow these steps
 
 ```
@@ -336,13 +337,15 @@ After deployment, one can interact with the smart contract and test its function
 **Step 2 (Final build + Code Hash):**
 Once the main commit is locked in, we can then produce the code hash and build to deploy to devnet 1st (for final testing) and then to mainnet (after sending the code hash to the auditor)
 
-1. Make sure your mxpy version is >= 6.
+1. Make sure your mxpy version is >= 6 (starting v3.0.0, we used mxpy 8.1.2).
 2. If Cargo.lock is in gitignore, remove it, build the contract and make a new commit. Otherwise this step can be skipped. (see Step 1 and repeat if needed)
 3. Run the following in the root of the repository (run the latest Docker client in your computer. Used `Docker Desktop 4.18.0 (104112) on MacOX 12.6`):
 
 `mxpy contract reproducible-build --docker-image="multiversx/sdk-rust-contract-builder:v4.1.4"`
 
 Note that if you already have a output-docker from a previous build and deploy then delete this folder.
+
+Also note that if you are upgrading you may need to use a newer docker `sdk-rust-contract-builder` version. You can see the tags here https://hub.docker.com/r/multiversx/sdk-rust-contract-builder/tags. Starting v3.0.0, we used v5.3.0 for the build to upgrade to. We tested this on devnet before doing it on mainnet.
 
 This process may take some time. After it's done you should see "Docker build ran successfully!". An output-docker folder will be created containing the WASM files built in a reproducible way and artifacts.json containing the code hash of the WASM files.
 
