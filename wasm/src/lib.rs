@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           34
+// Endpoints:                           35
 // Async Callback (empty):               1
-// Total number of exported functions:  36
+// Total number of exported functions:  37
 
 #![no_std]
 
@@ -38,6 +38,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         removeClaims => remove_claims
         claim => harvest_claim
         addThirdPartyClaim => add_third_party_claim
+        claimThirdParty => harvest_third_party_claims
         viewTokenIdentifier => claim_token
         viewClaim => claim
         viewThirdPartyTokenClaims => third_party_token_claims
@@ -51,7 +52,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         getAuthorizedThirdParties => authorized_third_parties
         viewClaims => view_claims
         viewClaimWithDate => view_claims_with_date
-        viewAllClaims => view_all_claims
+        viewClaimsData => view_claims_data
         factory_treasury_address => factory_treasury_address
         factory_tax => factory_tax
         factory_claims_contract_address => factory_claims_contract_address

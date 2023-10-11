@@ -1,7 +1,7 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-use crate::storage::{self, ClaimType, Len};
+use crate::{storage::{self, ClaimType, Len}, factory};
 
 // Structure that is used in order to return Itheum/eGLD claims with their last modification timestamp
 #[derive(ManagedVecItem, Clone, NestedEncode, NestedDecode, TopEncode, TopDecode, TypeAbi)]
@@ -19,18 +19,21 @@ pub struct EsdtClaim<M: ManagedTypeApi> {
 
 
 #[derive(ManagedVecItem, Clone, NestedEncode, NestedDecode, TopEncode, TopDecode, TypeAbi)]
-pub struct ClaimsOut<M: ManagedTypeApi> {
+pub struct ClaimsData<M: ManagedTypeApi> {
     pub reward: Claim<M>,
     pub airdrop: Claim<M>,
     pub allocation: Claim<M>,
     pub royalty: Claim<M>,
+    pub factory_address: ManagedAddress<M>,
+    pub treasury_address: ManagedAddress<M>,
+    pub tax_percentage: BigUint<M>,
     pub third_party_egld: Claim<M>,
     pub third_party_esdt: ManagedVec<M, EsdtClaim<M>>,
 }
 
 // Module that implements views, by which we understand read-only endpoints
 #[multiversx_sc::module]
-pub trait ViewsModule: storage::StorageModule {
+pub trait ViewsModule: storage::StorageModule + factory::FactoryContractProxyMethods {
     //View that returns the sum of all claims, from all claim types, for a given address
     #[view(viewClaims)]
     fn view_claims(&self, address: &ManagedAddress) -> BigUint {
@@ -59,9 +62,9 @@ pub trait ViewsModule: storage::StorageModule {
     }
 
     // View that returns all claim amounts 
-    #[view(viewAllClaims)]
-    fn view_all_claims(&self, address: &ManagedAddress) -> ClaimsOut<Self::Api>{
-        let claims = ClaimsOut {
+    #[view(viewClaimsData)]
+    fn view_claims_data(&self, address: &ManagedAddress) -> ClaimsData<Self::Api>{
+        let claims = ClaimsData {
             reward: Claim{
                 amount: self.claim(address, &ClaimType::Reward).get(),
                 date: self.claim_modify_date(address, &ClaimType::Reward).get()
@@ -78,6 +81,9 @@ pub trait ViewsModule: storage::StorageModule {
                 amount: self.claim(address, &ClaimType::Royalty).get(),
                 date: self.claim_modify_date(address, &ClaimType::Royalty).get()
             },
+            factory_address: self.factory_address().get(),
+            treasury_address: self.factory_treasury_address(),
+            tax_percentage: self.factory_tax(),
             third_party_egld: Claim{
                 amount: self.third_party_egld_claim(address).get(),
                 date: self.third_party_claim_modify_date(address, &EgldOrEsdtTokenIdentifier::egld()).get()
