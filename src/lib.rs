@@ -395,7 +395,7 @@ pub trait ClaimsContract:
         // Collect ESDT third party claims
         let esdt_royalties = self.third_party_token_claims(&caller);
         if esdt_royalties.len() > 0 {
-            did_claim_anything = false;
+            did_claim_anything = true;
             for (token, amount) in esdt_royalties.iter() {
                 self.send().direct_esdt(&caller, &token, 0, &amount);
                 self.third_party_claim_collected_event(&caller, &EgldOrEsdtTokenIdentifier::esdt(token), &amount);
