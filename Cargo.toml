@@ -1,0 +1,13 @@
+[package]
+name = "claims"
+version = "3.0.0"
+authors = ["Ovidiu Damian - Itheum"]
+edition = "2021"
+publish = false
+
+[lib]
+path = "src/lib.rs"
+[dependencies.multiversx-sc]
+version = "0.43.4"
+[dev-dependencies.multiversx-sc-scenario]
+version = "0.43.4"
