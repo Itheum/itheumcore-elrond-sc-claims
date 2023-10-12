@@ -122,6 +122,23 @@ pub trait ClaimsContract:
         depositor_addresses.remove(&address);
     }
 
+    #[endpoint(addDataNftCreators)]
+    fn add_data_nft_creators(&self, entries: MultiValueEncoded<MultiValue3<TokenIdentifier,u64,ManagedAddress>>){
+        let caller = self.blockchain().get_caller();
+        self.require_address_has_deposit_rights(&caller);
+
+        let owner = self.blockchain().get_owner_address();
+        let caller_is_not_owner = owner != caller;
+
+        for entry in entries.into_iter(){
+            let (token_id, nonce, creator) = entry.into_tuple();
+            if caller_is_not_owner{
+                require!(self.data_nft_creator(&token_id, nonce).is_empty(), ERR_DATA_NFT_CREATOR_SET);
+            }
+            self.data_nft_creator(&token_id, nonce).set(&creator);
+        }
+    }
+
     // Endpoint available for owner in order to add an authorized third party
     #[only_owner]
     #[endpoint(authorizeThirdParty)]
@@ -328,9 +345,10 @@ pub trait ClaimsContract:
     // Only receives the address for which to add the claims as an argument
     #[payable("*")]
     #[endpoint(addThirdPartyClaim)]
-    fn add_third_party_claim(&self, address: &ManagedAddress){
+    fn add_third_party_claim(&self, token_id: &TokenIdentifier, nonce: u64){
         self.require_factory_address_is_set();
-
+        self.require_data_nft_has_creator_set(token_id, nonce);
+        
         let caller = self.blockchain().get_caller();
         self.require_address_is_authorized_third_party(&caller);
 
@@ -338,6 +356,7 @@ pub trait ClaimsContract:
         let percentage_tax = self.factory_tax();
         let treasury = self.factory_treasury_address();
         let timestamp = self.blockchain().get_block_timestamp();
+        let address = self.data_nft_creator(token_id, nonce).get();
 
         // Check if there is an eGLD or ESDT(s) payment (can't be both at the same time)
         if egld_payment > BigUint::zero() {
@@ -347,7 +366,7 @@ pub trait ClaimsContract:
             self.send().direct_egld(&treasury, &tax);
 
             // Update third party claim
-            self.third_party_egld_claim(address).update(|current_egld_claim| {
+            self.third_party_egld_claim(&address).update(|current_egld_claim| {
                 *current_egld_claim += &egld_payment - &tax;
             });
             self.third_party_claim_added_event(&caller, &address, &EgldOrEsdtTokenIdentifier::egld(), &egld_payment);
@@ -365,14 +384,14 @@ pub trait ClaimsContract:
                 self.send().direct_esdt(&treasury, &payment.token_identifier, 0, &tax);
 
                 // Update third party claim
-                let current_claim = self.third_party_token_claims(address).get(&payment.token_identifier);
+                let current_claim = self.third_party_token_claims(&address).get(&payment.token_identifier);
                 let egld_or_esdt_token = EgldOrEsdtTokenIdentifier::esdt(payment.token_identifier.clone());
                 self.third_party_claim_added_event(&caller, &address, &egld_or_esdt_token, &(&payment.amount - &tax));
                 self.third_party_claim_modify_date(&address, &egld_or_esdt_token).set(&timestamp);
                 if current_claim.is_none(){
-                    self.third_party_token_claims(address).insert(payment.token_identifier, &payment.amount - &tax);
+                    self.third_party_token_claims(&address).insert(payment.token_identifier, &payment.amount - &tax);
                 }else{
-                    self.third_party_token_claims(address).insert(payment.token_identifier, &current_claim.unwrap() + &payment.amount - &tax);
+                    self.third_party_token_claims(&address).insert(payment.token_identifier, &current_claim.unwrap() + &payment.amount - &tax);
                 }
             }
         }

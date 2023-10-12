@@ -94,10 +94,14 @@ pub trait StorageModule {
 
     // Stores the address of the Data NFT Minter factory contract proxy
     #[view(getFactoryAddress)]
-    #[storage_mapper("factory_address")]
+    #[storage_mapper("factoryAddress")]
     fn factory_address(&self) -> SingleValueMapper<ManagedAddress>;
 
     #[view(getAuthorizedThirdParties)]
     #[storage_mapper("authorizedThirdParties")]
     fn authorized_third_parties(&self) -> SetMapper<ManagedAddress>;
+
+    #[view(getDataNftCreator)]
+    #[storage_mapper("dataNftCreator")]
+    fn data_nft_creator(&self, token_id: &TokenIdentifier, nonce: u64) -> SingleValueMapper<ManagedAddress>;
 }

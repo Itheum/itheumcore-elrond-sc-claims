@@ -77,4 +77,12 @@ pub trait RequirementsModule: storage::StorageModule {
             ERR_FACTORY_ADDRESS_NOT_SET
         );
     }
+
+    // Checks whether the claims contract has a Data NFT creator set in memory
+    fn require_data_nft_has_creator_set(&self, token_id: &TokenIdentifier, nonce: u64){
+        require!(
+            !self.data_nft_creator(token_id, nonce).is_empty(),
+            ERR_DATA_NFT_CREATOR_NOT_SET
+        );
+    }
 }

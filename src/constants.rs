@@ -27,3 +27,5 @@ pub const ERR_CLAIM_EQUAL_PAYMENT: &str = "Claims added must equal payment amoun
 pub const ERR_TOKEN_IS_NOT_FUNGIBLE: &str = "Payment token is not fungible";
 pub const ERR_FACTORY_ADDRESS_NOT_SET: &str = "Factory address is not set";
 pub const ERR_NO_THIRD_PARTY_CLAIMS: &str = "No third party claims to harvest";
+pub const ERR_DATA_NFT_CREATOR_NOT_SET: &str = "Data NFT creator is not set";
+pub const ERR_DATA_NFT_CREATOR_SET: &str = "Data NFT creator already set";

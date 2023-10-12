@@ -9,6 +9,7 @@ use multiversx_sc_scenario::*;
 
 pub const WASM_PATH: &'static str = "../output/claims.wasm";
 pub const TOKEN_ID: &[u8] = b"ITHEUM-df6f26";
+pub const DATA_NFT_ID: &[u8] = b"DNFT-123abc";
 pub const WRONG_TOKEN_ID: &[u8] = b"WRONG-123456";
 pub const OWNER_EGLD_BALANCE: u64 = 100_000_000;
 
@@ -1422,94 +1423,108 @@ fn harvest_all_claims_test() {
     b_wrapper.check_esdt_balance(user_addr, TOKEN_ID, &rust_biguint!(2_000_000));
 }
 
-// #[test] //Tests whether authorized third party addresses can add a claim, but an unauthorized address cannot
-// fn authorized_third_pary_add_claim_test() {
-//     let mut setup = setup_contract(claims::contract_obj);
-//     let b_wrapper = &mut setup.blockchain_wrapper;
-//     let owner_address = &setup.owner_address;
-//     let user_addr = &setup.first_user_address;
-//     let user_addr_2 = &setup.second_user_address;
-//     let user_addr_3 = &setup.third_user_address;
+#[test] // Tests whether adding Data NFT creators works as expected
+// Tests whether the owner can change the Data NFT creator
+// Tests whether depositors can't change the Data NFT creator
+fn add_data_nft_creators_test() {
+    let mut setup = setup_contract(claims::contract_obj);
+    let b_wrapper = &mut setup.blockchain_wrapper;
+    let owner_address = &setup.owner_address;
+    let first_user_addr = &setup.first_user_address;
+    let second_user_addr = &setup.second_user_address;
 
-//     b_wrapper.set_esdt_balance(user_addr_2, TOKEN_ID, &rust_biguint!(1_000));
-//     b_wrapper.set_esdt_balance(user_addr_2, WRONG_TOKEN_ID, &rust_biguint!(1_000));
-//     b_wrapper.set_egld_balance(user_addr_2, &rust_biguint!(1_000));
-//     b_wrapper
-//     .execute_tx(
-//         &owner_address,
-//         &setup.contract_wrapper,
-//         &rust_biguint!(0),
-//         |sc| {
-//             sc.authorize_third_party_address(managed_address!(user_addr_2));
-//         },
-//     )
-//     .assert_ok();
+    b_wrapper
+        .execute_tx(
+        owner_address,
+        &setup.contract_wrapper,
+        &rust_biguint!(0),
+        |sc| {
+            let mut args = MultiValueEncoded::new();
+            args.push(MultiValue3(
+                (
+                    managed_token_id!(DATA_NFT_ID),
+                    1u64,
+                    managed_address!(first_user_addr),
+                )
+                    .into(),
+            ));
+            args.push(MultiValue3(
+                (
+                    managed_token_id!(DATA_NFT_ID),
+                    2u64,
+                    managed_address!(second_user_addr),
+                )
+                    .into(),
+            ));
+            sc.add_data_nft_creators(args);
+        },
+    )
+    .assert_ok();
 
-//     b_wrapper
-//         .execute_esdt_transfer(
-//             user_addr_2,
-//             &setup.contract_wrapper,
-//             TOKEN_ID,
-//             0,
-//             &rust_biguint!(700),
-//             |sc| {
-//                 sc.add_third_party_claim(&managed_address!(user_addr));
-//             },
-//         )
-//         .assert_ok();
+    b_wrapper
+        .execute_tx(
+        second_user_addr,
+        &setup.contract_wrapper,
+        &rust_biguint!(0),
+        |sc| {
+            let mut args = MultiValueEncoded::new();
+            args.push(MultiValue3(
+                (
+                    managed_token_id!(DATA_NFT_ID),
+                    1u64,
+                    managed_address!(second_user_addr),
+                )
+                    .into(),
+            ));
+            sc.add_data_nft_creators(args);
+        },
+    )
+    .assert_user_error(ERR_DATA_NFT_CREATOR_SET);
 
-//     b_wrapper
-//         .execute_tx(
-//             user_addr_2,
-//             &setup.contract_wrapper,
-//             &rust_biguint!(1_000),
-//             |sc| {
-//                 sc.add_third_party_claim(&managed_address!(user_addr));
-//             },
-//         )
-//         .assert_ok();
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.data_nft_creator(&managed_token_id!(DATA_NFT_ID), 1u64).get(),
+                managed_address!(first_user_addr)
+            );
+        })
+        .assert_ok();
 
-//     b_wrapper
-//         .execute_esdt_transfer(
-//             user_addr_2,
-//             &setup.contract_wrapper,
-//             WRONG_TOKEN_ID,
-//             0,
-//             &rust_biguint!(1_000),
-//             |sc| {
-//                 sc.add_third_party_claim(&managed_address!(user_addr));
-//             },
-//         )
-//         .assert_ok();
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.data_nft_creator(&managed_token_id!(DATA_NFT_ID), 2u64).get(),
+                managed_address!(second_user_addr)
+            );
+        })
+        .assert_ok();
 
-//     b_wrapper
-//         .execute_esdt_transfer(
-//             user_addr,
-//             &setup.contract_wrapper,
-//             TOKEN_ID,
-//             0,
-//             &rust_biguint!(1_000),
-//             |sc| {
-//                 sc.add_third_party_claim(&managed_address!(user_addr_2));
-//             },
-//         )
-//         .assert_user_error(ERR_ADDRESS_NOT_AUTHORIZED);
+    b_wrapper
+        .execute_tx(
+        owner_address,
+        &setup.contract_wrapper,
+        &rust_biguint!(0),
+        |sc| {
+            let mut args = MultiValueEncoded::new();
+            args.push(MultiValue3(
+                (
+                    managed_token_id!(DATA_NFT_ID),
+                    1u64,
+                    managed_address!(second_user_addr),
+                )
+                    .into(),
+            ));
+            sc.add_data_nft_creators(args);
+        },
+    )
+    .assert_ok();
 
-//     b_wrapper
-//         .execute_query(&setup.contract_wrapper, |sc| {
-//             assert_eq!(
-//                 sc.third_party_egld_claim(&managed_address!(user_addr)).get(),
-//                 1_000
-//             );
-//         })
-//         .assert_ok();
-
-//     b_wrapper
-//         .execute_query(&setup.contract_wrapper, |sc| {
-//             assert_eq!(
-//                 sc.third_party_token_claims(&managed_address!(user_addr)).get(&managed_token_id!(TOKEN_ID)),
-//                 Option::from(managed_biguint!(1_000))
-//             );
-//         })
-//         .assert_ok();
-// }
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+        assert_eq!(
+            sc.data_nft_creator(&managed_token_id!(DATA_NFT_ID), 1u64).get(),
+            managed_address!(second_user_addr)
+        );
+    })
+    .assert_ok();
+}

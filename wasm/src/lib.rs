@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           36
+// Endpoints:                           37
 // Async Callback (empty):               1
-// Total number of exported functions:  38
+// Total number of exported functions:  39
 
 #![no_std]
 
@@ -50,6 +50,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         viewDepositorAddresses => depositor_addresses
         getFactoryAddress => factory_address
         getAuthorizedThirdParties => authorized_third_parties
+        getDataNftCreator => data_nft_creator
         viewClaims => view_claims
         viewClaimWithDate => view_claims_with_date
         viewClaimsData => view_claims_data
