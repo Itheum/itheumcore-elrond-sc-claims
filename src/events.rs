@@ -30,6 +30,14 @@ pub trait EventsModule {
     #[event("depositorAddressRemoved")]
     fn depositor_address_removed_event(&self, #[indexed] address: &ManagedAddress);
 
+    // Emitted whenever the owner sets the address (e.g. Data NFT marketplace contract)
+    #[event("minterAddressAdded")]
+    fn minter_address_added_event(&self, #[indexed] address: &ManagedAddress);
+
+    // Emitted whenever the owner clears the address (e.g. Data NFT marketplace contract)
+    #[event("minterAddressRemoved")]
+    fn minter_address_removed_event(&self, #[indexed] address: &ManagedAddress);
+
     // Emitted whenever the owner authorizes a third party  (e.g. marketplace contract)
     #[event("thirdPartyAddressAuthorized")]
     fn third_party_address_authorized_event(&self, #[indexed] address: &ManagedAddress);

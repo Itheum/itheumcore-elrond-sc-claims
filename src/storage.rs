@@ -101,6 +101,10 @@ pub trait StorageModule {
     #[storage_mapper("authorizedThirdParties")]
     fn authorized_third_parties(&self) -> SetMapper<ManagedAddress>;
 
+    #[view(getDataNftMinters)]
+    #[storage_mapper("dataNftMinters")]
+    fn data_nft_minters(&self) -> SetMapper<ManagedAddress>;
+
     #[view(getDataNftCreator)]
     #[storage_mapper("dataNftCreator")]
     fn data_nft_creator(&self, token_id: &TokenIdentifier, nonce: u64) -> SingleValueMapper<ManagedAddress>;

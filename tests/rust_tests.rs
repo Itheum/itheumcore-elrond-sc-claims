@@ -79,6 +79,12 @@ where
         .assert_ok();
 
     blockchain_wrapper
+        .execute_tx(&owner_address, &cf_wrapper, &rust_zero, |sc| {
+            sc.add_minter_address(managed_address!(&third_user_address));
+        })
+        .assert_ok();
+
+    blockchain_wrapper
         .execute_query(&cf_wrapper, |sc| {
             assert_eq!(sc.is_paused().get(), true);
         })
@@ -478,6 +484,84 @@ fn add_and_remove_depositor_addresses_test() {
                     && sc
                         .depositor_addresses()
                         .contains(&managed_address!(second_user_addr)),
+                true
+            );
+        })
+        .assert_ok();
+}
+
+#[test] //Tests whether adding and removing minter addresses works as expected
+        //Tests if trying give minter to an address that already has them returns an error
+        //Tests if trying to offer minter to the owner of the smart contract returns an error
+        //Tests if trying to remove the minter that is not minter returns an error
+fn add_and_remove_minter_addresses_test() {
+    let mut setup = setup_contract(claims::contract_obj);
+    let b_wrapper = &mut setup.blockchain_wrapper;
+    let owner_address = &setup.owner_address;
+    let first_user_addr = &setup.first_user_address;
+    let second_user_addr = &setup.second_user_address;
+    let third_user_addr = &setup.third_user_address;
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.add_minter_address(managed_address!(first_user_addr));
+            },
+        )
+        .assert_ok();
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.remove_minter_address(managed_address!(second_user_addr));
+            },
+        )
+        .assert_user_error(ERR_ADDRESS_NOT_MINTER);
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.data_nft_minters()
+                    .contains(&managed_address!(first_user_addr))
+                    && sc
+                        .data_nft_minters()
+                        .contains(&managed_address!(third_user_addr)),
+                true
+            );
+        })
+        .assert_ok();
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.remove_minter_address(managed_address!(first_user_addr));
+            },
+        )
+        .assert_ok();
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.add_minter_address(managed_address!(owner_address));
+            },
+        )
+        .assert_user_error(ERR_OWNER_NOT_MINTER);
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                !sc.data_nft_minters()
+                    .contains(&managed_address!(first_user_addr))
+                    && sc
+                        .data_nft_minters()
+                        .contains(&managed_address!(third_user_addr)),
                 true
             );
         })
@@ -1432,6 +1516,7 @@ fn add_data_nft_creators_test() {
     let owner_address = &setup.owner_address;
     let first_user_addr = &setup.first_user_address;
     let second_user_addr = &setup.second_user_address;
+    let third_user_addr = &setup.third_user_address;
 
     b_wrapper
         .execute_tx(
@@ -1462,26 +1547,6 @@ fn add_data_nft_creators_test() {
     .assert_ok();
 
     b_wrapper
-        .execute_tx(
-        second_user_addr,
-        &setup.contract_wrapper,
-        &rust_biguint!(0),
-        |sc| {
-            let mut args = MultiValueEncoded::new();
-            args.push(MultiValue3(
-                (
-                    managed_token_id!(DATA_NFT_ID),
-                    1u64,
-                    managed_address!(second_user_addr),
-                )
-                    .into(),
-            ));
-            sc.add_data_nft_creators(args);
-        },
-    )
-    .assert_user_error(ERR_DATA_NFT_CREATOR_SET);
-
-    b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             assert_eq!(
                 sc.data_nft_creator(&managed_token_id!(DATA_NFT_ID), 1u64).get(),
@@ -1501,7 +1566,7 @@ fn add_data_nft_creators_test() {
 
     b_wrapper
         .execute_tx(
-        owner_address,
+        third_user_addr,
         &setup.contract_wrapper,
         &rust_biguint!(0),
         |sc| {
@@ -1523,6 +1588,15 @@ fn add_data_nft_creators_test() {
         .execute_query(&setup.contract_wrapper, |sc| {
         assert_eq!(
             sc.data_nft_creator(&managed_token_id!(DATA_NFT_ID), 1u64).get(),
+            managed_address!(second_user_addr)
+        );
+    })
+    .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+        assert_eq!(
+            sc.data_nft_creator(&managed_token_id!(DATA_NFT_ID), 2u64).get(),
             managed_address!(second_user_addr)
         );
     })

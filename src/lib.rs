@@ -122,19 +122,45 @@ pub trait ClaimsContract:
         depositor_addresses.remove(&address);
     }
 
+    // Endpoint available for owner in order to add minter addresses
+    #[only_owner]
+    #[endpoint(addMinterAddress)]
+    fn add_minter_address(&self, address: ManagedAddress) {
+        let mut minter_addresses = self.data_nft_minters();
+        require!(
+            !minter_addresses.contains(&address),
+            ERR_ADDRESS_MINTER
+        );
+
+        let owner = self.blockchain().get_owner_address();
+        require!(owner != address, ERR_OWNER_NOT_MINTER);
+
+        self.minter_address_added_event(&address);
+        minter_addresses.insert(address);
+    }
+    
+    // Endpoint available for owner in order to remove minter addresses
+    #[only_owner]
+    #[endpoint(removeMinterAddress)]
+    fn remove_minter_address(&self, address: ManagedAddress) {
+        let mut minter_addresses = self.data_nft_minters();
+        require!(
+            minter_addresses.contains(&address),
+            ERR_ADDRESS_NOT_MINTER
+        );
+
+        self.minter_address_removed_event(&address);
+        minter_addresses.remove(&address);
+    }
+
     #[endpoint(addDataNftCreators)]
     fn add_data_nft_creators(&self, entries: MultiValueEncoded<MultiValue3<TokenIdentifier,u64,ManagedAddress>>){
         let caller = self.blockchain().get_caller();
-        self.require_address_has_deposit_rights(&caller);
-
         let owner = self.blockchain().get_owner_address();
-        let caller_is_not_owner = owner != caller;
+        require!(caller == owner || self.data_nft_minters().contains(&caller), ERR_ADDRESS_NOT_MINTER);
 
         for entry in entries.into_iter(){
             let (token_id, nonce, creator) = entry.into_tuple();
-            if caller_is_not_owner{
-                require!(self.data_nft_creator(&token_id, nonce).is_empty(), ERR_DATA_NFT_CREATOR_SET);
-            }
             self.data_nft_creator(&token_id, nonce).set(&creator);
         }
     }
