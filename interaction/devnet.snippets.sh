@@ -210,6 +210,54 @@ setFactoryAddress(){
     --send || return
 }
 
+addMinterAddress(){
+    # $1 = address of the minter
+
+    address="0x$(mxpy wallet bech32 --decode ${1})"
+    mxpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=10000000 \
+    --function "addMinterAddress" \
+    --arguments $address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
+removeMinterAddress(){
+    # $1 = address to remove from the minter list
+
+    address="0x$(mxpy wallet bech32 --decode ${1})"
+    mxpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=10000000 \
+    --function "removeMinterAddress" \
+    --arguments $address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
+addDataNftCreatorToMapping(){
+    # $1 = token identifier to map
+    # $2 = nonce to map
+    # $3 = address to map
+
+    token_hex="0x$(echo -n ${1} | xxd -p -u | tr -d '\n')"
+    address="0x$(mxpy wallet bech32 --decode ${3})"
+    mxpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=6000000 \
+    --function "addDataNftCreators" \
+    --arguments ${token_hex} $2 $address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
 authorizeThirdParty(){
     # $1 = address to authorize
 
@@ -243,8 +291,10 @@ unauthorizeThirdParty(){
 addThirdPartyESDTClaim(){
     # $1 = token to add to claim
     # $2 = amount to add to claim
-    # $3 = address to which to attribute the claim
+    # $3 = token to which to attribute the claim
+    # $4 = nonce to which to attribute the claim
 
+    token_to_claim_hex="0x$(echo -n ${3} | xxd -p -u | tr -d '\n')"
     token_hex="0x$(echo -n ${1} | xxd -p -u | tr -d '\n')"
     method="0x$(echo -n 'addThirdPartyClaim' | xxd -p -u | tr -d '\n')"
     address="0x$(mxpy wallet bech32 --decode ${3})"
@@ -253,7 +303,7 @@ addThirdPartyESDTClaim(){
     --pem=${WALLET} \
     --gas-limit=10000000 \
     --function "ESDTTransfer" \
-    --arguments ${token_hex} $2 $method $address \
+    --arguments ${token_hex} $2 $method $token_to_claim_hex $4 \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --send || return
@@ -266,6 +316,10 @@ addThirdPartyMultipleESDTClaim(){
     # $4 = token 2 to add to claim
     # $5 = amount 2 to add to claim
     # $6 = address to which to attribute the claim
+    # $7 = token to which to attribute the claim
+    # $8 = nonce to which to attribute the claim
+
+    token_to_claim_hex="0x$(echo -n ${7} | xxd -p -u | tr -d '\n')"
 
     token_hex_1="0x$(echo -n ${2} | xxd -p -u | tr -d '\n')"
     token_hex_2="0x$(echo -n ${4} | xxd -p -u | tr -d '\n')"
@@ -277,7 +331,7 @@ addThirdPartyMultipleESDTClaim(){
     --pem=${WALLET} \
     --gas-limit=20000000 \
     --function "MultiESDTNFTTransfer" \
-    --arguments ${sc_address} 2 $token_hex_1 0 $3 $token_hex_2 0 $5 $method $address \
+    --arguments ${sc_address} 2 $token_hex_1 0 $3 $token_hex_2 0 $5 $method $token_to_claim_hex $8 \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --send || return
@@ -286,6 +340,10 @@ addThirdPartyMultipleESDTClaim(){
 addThirdPartyEGLDClaim(){
     # $1 = amount to add to claim
     # $2 = address to which to attribute the claim
+    # $3 = token to which to attribute the claim
+    # $4 = nonce to which to attribute the claim
+
+    token_to_claim_hex="0x$(echo -n ${3} | xxd -p -u | tr -d '\n')"
 
     address="0x$(mxpy wallet bech32 --decode ${2})"
     mxpy --verbose contract call ${ADDRESS} \
@@ -293,7 +351,7 @@ addThirdPartyEGLDClaim(){
     --pem=${WALLET} \
     --gas-limit=10000000 \
     --function "addThirdPartyClaim" \
-    --arguments $address \
+    --arguments $token_to_claim_hex $4 \
     --value $1 \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
