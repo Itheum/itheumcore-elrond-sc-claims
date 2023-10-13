@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           37
+// Endpoints:                           42
 // Async Callback (empty):               1
-// Total number of exported functions:  39
+// Total number of exported functions:  44
 
 #![no_std]
 
@@ -29,6 +29,9 @@ multiversx_sc_wasm_adapter::endpoints! {
         removePrivilegedAddress => remove_privileged_address
         addDepositorAddress => add_depositor_address
         removeDepositorAddress => remove_depositor_address
+        addMinterAddress => add_minter_address
+        removeMinterAddress => remove_minter_address
+        addDataNftCreators => add_data_nft_creators
         authorizeThirdParty => authorize_third_party_address
         unauthorizeThirdParty => unauthorize_third_party_address
         setFactoryAddress => set_factory_address
@@ -39,6 +42,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         claim => harvest_claim
         addThirdPartyClaim => add_third_party_claim
         claimThirdParty => harvest_third_party_claims
+        selfClaimThirdParty => self_harvest_third_party_claims
         viewTokenIdentifier => claim_token
         viewClaim => claim
         viewThirdPartyTokenClaims => third_party_token_claims
@@ -50,6 +54,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         viewDepositorAddresses => depositor_addresses
         getFactoryAddress => factory_address
         getAuthorizedThirdParties => authorized_third_parties
+        getDataNftMinters => data_nft_minters
         getDataNftCreator => data_nft_creator
         viewClaims => view_claims
         viewClaimWithDate => view_claims_with_date

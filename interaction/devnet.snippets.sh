@@ -369,6 +369,17 @@ harvestThirdPartyClaims(){
     --send || return
 }
 
+harvestItheumThirdPartyClaims(){
+    mxpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=6000000 \
+    --function "selfClaimThirdParty" \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
 viewFactoryData(){
     mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \

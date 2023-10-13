@@ -449,4 +449,33 @@ pub trait ClaimsContract:
         }
         require!(did_claim_anything, ERR_NO_THIRD_PARTY_CLAIMS);
     }
+
+    // Private endpoint that can be called in order to collect third party claims that are created by the owner
+    #[only_owner]
+    #[endpoint(selfClaimThirdParty)]
+    fn self_harvest_third_party_claims(&self){
+        let address = self.blockchain().get_sc_address();
+        let address_to_send = self.factory_treasury_address();
+        let mut did_claim_anything = false;
+        // Collect eGLD third party claims
+        let egld_royalties = self.third_party_egld_claim(&address).get();
+        if egld_royalties > BigUint::zero() {
+            did_claim_anything = true;
+            self.send().direct_egld(&address_to_send, &egld_royalties);
+            self.third_party_egld_claim(&address).set(BigUint::zero());
+            self.third_party_claim_collected_event(&address, &EgldOrEsdtTokenIdentifier::egld(), &egld_royalties);
+        }
+
+        // Collect ESDT third party claims
+        let esdt_royalties = self.third_party_token_claims(&address);
+        if esdt_royalties.len() > 0 {
+            did_claim_anything = true;
+            for (token, amount) in esdt_royalties.iter() {
+                self.send().direct_esdt(&address_to_send, &token, 0, &amount);
+                self.third_party_claim_collected_event(&address, &EgldOrEsdtTokenIdentifier::esdt(token), &amount);
+            }
+            self.third_party_token_claims(&address).clear();
+        }
+        require!(did_claim_anything, ERR_NO_THIRD_PARTY_CLAIMS);
+    }
 }
