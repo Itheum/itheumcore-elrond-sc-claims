@@ -34,7 +34,7 @@ pub trait FactoryContractProxyMethods: crate::storage::StorageModule {
         let factory_proxy_address = self.factory_address().get();
         self.factory_proxy(factory_proxy_address)
             .get_factory_treasury_address()
-            .execute_on_dest_context_readonly::<ManagedAddress>()
+            .execute_on_dest_context::<ManagedAddress>()
     }
 
     #[endpoint]
@@ -42,7 +42,7 @@ pub trait FactoryContractProxyMethods: crate::storage::StorageModule {
         let factory_proxy_address = self.factory_address().get();
         self.factory_proxy(factory_proxy_address)
             .get_factory_tax()
-            .execute_on_dest_context_readonly::<BigUint>()
+            .execute_on_dest_context::<BigUint>()
     }
 
     #[endpoint]
@@ -50,7 +50,7 @@ pub trait FactoryContractProxyMethods: crate::storage::StorageModule {
         let factory_proxy_address = self.factory_address().get();
         self.factory_proxy(factory_proxy_address)
             .get_factory_claims_contract_address()
-            .execute_on_dest_context_readonly::<ManagedAddress>()
+            .execute_on_dest_context::<ManagedAddress>()
     }
 
     #[endpoint]
@@ -58,6 +58,6 @@ pub trait FactoryContractProxyMethods: crate::storage::StorageModule {
         let factory_proxy_address = self.factory_address().get();
         self.factory_proxy(factory_proxy_address)
             .get_factory_claims_token_identifier()
-            .execute_on_dest_context_readonly::<TokenIdentifier>()
+            .execute_on_dest_context::<TokenIdentifier>()
     }
 }
