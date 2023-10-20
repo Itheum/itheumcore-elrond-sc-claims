@@ -1,22 +1,21 @@
-use claims::{ProxyTrait as _, constants::{ERR_ADDRESS_NOT_AUTHORIZED, ERR_NO_THIRD_PARTY_CLAIMS}};
+use claims::{ProxyTrait as _, constants::{ERR_ADDRESS_NOT_AUTHORIZED, ERR_NO_THIRD_PARTY_CLAIMS, ERR_DATA_NFT_CREATOR_NOT_SET}};
 use core_mx_minter_factory_sc::ProxyTrait;
 use multiversx_sc::{
-    storage::mappers::SingleValue,
-    types::{Address, BigUint, ManagedAddress, ManagedBuffer, TokenIdentifier, MultiValueEncoded},
+    types::{Address, ManagedAddress, TokenIdentifier, MultiValueEncoded},
     codec::multi_types::MultiValue3,
 };
 
 use multiversx_sc_scenario::{
     api::StaticApi,
     scenario_model::{
-        Account, AddressValue, BytesValue, ScCallStep, ScDeployStep, ScQueryStep, SetStateStep,
-        TxExpect,
+        Account, AddressValue, ScCallStep, ScDeployStep, SetStateStep,
+        TxExpect, CheckStateStep, CheckAccount,
     },
     ContractInfo, ScenarioWorld,
 };
 
 const CLAIMS_TOKEN_ID_EXPR: &str = "str:ITHEUM-abc123";
-const DATANFT_TOKEN_ID_EXPR: &str = "str:ITHEUM-abc123";
+const DATANFT_TOKEN_ID_EXPR: &str = "str:DNFT-abc123";
 const CLAIMS_PATH_EXPR: &str = "file:output/claims.wasm";
 const FACTORY_PATH_EXPR: &str = "file:/mnt/d/Programming/MultiversX/itheum/core-mx-minter-factory-sc/output/core-mx-minter-factory-sc.wasm";
 const FIRST_USER_ADDRESS_EXPR: &str = "address:first-user";
@@ -60,7 +59,7 @@ impl ClaimsContractState{
             .new_address(OWNER_ADDRESS_EXPR, 2, FACTORY_CONTRACT_ADDRESS_EXPR)
             .put_account(FIRST_USER_ADDRESS_EXPR, Account::new().nonce(1).balance("1_000"))
             .put_account(SECOND_USER_ADDRESS_EXPR, Account::new().nonce(1).balance("1_000"))
-            .put_account(THIRD_PARTY_CONTRACT_ADDRESS_EXPR, Account::new().nonce(1).balance("1_000"))
+            .put_account(THIRD_PARTY_CONTRACT_ADDRESS_EXPR, Account::new().nonce(1).balance("10_000").esdt_balance(CLAIMS_TOKEN_ID_EXPR, "10_000"))
             .put_account(TREASURY_ADDRESS_EXPR,Account::new().nonce(1).balance("1_000"))
         );
 
@@ -142,18 +141,16 @@ fn deploy_initialize_test(){
 }
 
 #[test]
-fn add_third_party_claim_test(){
+fn third_party_claim_test(){
     let mut state = ClaimsContractState::new();
     state.deploy();
     state.initialize();
 
-    let third_party = AddressValue::from(THIRD_PARTY_CONTRACT_ADDRESS_EXPR).to_address();
-    let first_user_address = AddressValue::from(FIRST_USER_ADDRESS_EXPR).to_address();
-    let second_user_address = AddressValue::from(SECOND_USER_ADDRESS_EXPR).to_address();
-
     state.world.sc_call(ScCallStep::new().from(OWNER_ADDRESS_EXPR).egld_value(1000u64).call(
         state.claims_contract.add_third_party_claim(TokenIdentifier::from(DATANFT_TOKEN_ID_EXPR), 1u64),
     ));
+
+    state.world.check_state_step(CheckStateStep::new().put_account(TREASURY_ADDRESS_EXPR, CheckAccount::new().balance("1_100")));
 
     state.world.sc_call(ScCallStep::new().from(THIRD_PARTY_CONTRACT_ADDRESS_EXPR).egld_value(1000u64).call(
         state.claims_contract.add_third_party_claim(TokenIdentifier::from(DATANFT_TOKEN_ID_EXPR), 1u64),
@@ -168,6 +165,12 @@ fn add_third_party_claim_test(){
         state.claims_contract.add_third_party_claim(TokenIdentifier::from(DATANFT_TOKEN_ID_EXPR), 1u64),
     ));
 
+    state.world.sc_call(ScCallStep::new().from(THIRD_PARTY_CONTRACT_ADDRESS_EXPR).egld_value(1000u64).call(
+        state.claims_contract.add_third_party_claim(TokenIdentifier::from(DATANFT_TOKEN_ID_EXPR), 2u64),
+    ).expect(TxExpect::user_error("str:".to_string() + ERR_DATA_NFT_CREATOR_NOT_SET)));
+
+    state.world.check_state_step(CheckStateStep::new().put_account(TREASURY_ADDRESS_EXPR, CheckAccount::new().balance("1_200")));
+
     state.world.sc_call(ScCallStep::new().from(THIRD_PARTY_CONTRACT_ADDRESS_EXPR).call(
         state.claims_contract.harvest_third_party_claims(),
     ).expect(TxExpect::user_error("str:".to_string() + ERR_NO_THIRD_PARTY_CLAIMS)));
@@ -175,4 +178,38 @@ fn add_third_party_claim_test(){
     state.world.sc_call(ScCallStep::new().from(FIRST_USER_ADDRESS_EXPR).call(
         state.claims_contract.harvest_third_party_claims(),
     ));
+
+    state.world.check_state_step(CheckStateStep::new().put_account(FIRST_USER_ADDRESS_EXPR, CheckAccount::new().balance("2_800")));
+
+    state.world.sc_call(ScCallStep::new().from(THIRD_PARTY_CONTRACT_ADDRESS_EXPR).esdt_transfer(CLAIMS_TOKEN_ID_EXPR,0u64, 1000u64).call(
+        state.claims_contract.add_third_party_claim(TokenIdentifier::from(DATANFT_TOKEN_ID_EXPR), 1u64),
+    ));
+
+    state.world.check_state_step(CheckStateStep::new().put_account(TREASURY_ADDRESS_EXPR, CheckAccount::new().esdt_balance(CLAIMS_TOKEN_ID_EXPR ,"100")));
+
+    state.world.sc_call(ScCallStep::new().from(FIRST_USER_ADDRESS_EXPR).call(
+        state.claims_contract.harvest_third_party_claims(),
+    ));
+
+    state.world.check_state_step(CheckStateStep::new().put_account(FIRST_USER_ADDRESS_EXPR, CheckAccount::new().esdt_balance(CLAIMS_TOKEN_ID_EXPR ,"900")));
+
+    state.world.sc_call(ScCallStep::new().from(THIRD_PARTY_CONTRACT_ADDRESS_EXPR).egld_value(1000u64).call(
+        state.claims_contract.add_third_party_claim(TokenIdentifier::from(DATANFT_TOKEN_ID_EXPR), 1u64),
+    ));
+
+    state.world.sc_call(ScCallStep::new().from(THIRD_PARTY_CONTRACT_ADDRESS_EXPR).esdt_transfer(CLAIMS_TOKEN_ID_EXPR,0u64, 1000u64).call(
+        state.claims_contract.add_third_party_claim(TokenIdentifier::from(DATANFT_TOKEN_ID_EXPR), 1u64),
+    ));
+
+    state.world.sc_call(ScCallStep::new().from(THIRD_PARTY_CONTRACT_ADDRESS_EXPR).esdt_transfer(CLAIMS_TOKEN_ID_EXPR,0u64, 1000u64).call(
+        state.claims_contract.add_third_party_claim(TokenIdentifier::from(DATANFT_TOKEN_ID_EXPR), 1u64),
+    ));
+
+    state.world.sc_call(ScCallStep::new().from(FIRST_USER_ADDRESS_EXPR).call(
+        state.claims_contract.harvest_third_party_claims(),
+    ));
+
+    state.world.check_state_step(CheckStateStep::new().put_account(FIRST_USER_ADDRESS_EXPR, CheckAccount::new().balance("3_700")));
+
+    state.world.check_state_step(CheckStateStep::new().put_account(FIRST_USER_ADDRESS_EXPR, CheckAccount::new().esdt_balance(CLAIMS_TOKEN_ID_EXPR ,"2700")));
 }
