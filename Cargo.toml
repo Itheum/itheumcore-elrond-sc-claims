@@ -12,4 +12,4 @@ version = "0.43.4"
 [dev-dependencies.multiversx-sc-scenario]
 version = "0.43.4"
 [dev-dependencies]
-core-mx-minter-factory-sc = { path = "/mnt/d/Programming/MultiversX/itheum/core-mx-minter-factory-sc" }
+core-mx-minter-factory-sc = { path = "/local..path..to/core-mx-minter-factory-sc" }

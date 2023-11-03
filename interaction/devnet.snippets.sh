@@ -6,7 +6,7 @@ WALLET="./wallet.pem"
 ADDRESS=$(mxpy data load --key=address-devnet)
 DEPLOY_TRANSACTION=$(mxpy data load --key=deployTransaction-devnet)
 
-TOKEN="ITHEUM-a61317"
+TOKEN="ITHEUM-fce905"
 TOKEN_HEX="0x$(echo -n ${TOKEN} | xxd -p -u | tr -d '\n')"
 
 deploy(){
@@ -36,7 +36,7 @@ restoreDeployData() {
 
   # after we upgraded to mxpy 8.1.2, mxpy data parse seems to load the ADDRESS correctly but it breaks when used below with a weird "Bad address" error
   # so, we just hardcode the ADDRESS here. Just make sure you use the "data['contractAddress'] from the latest deploy-devnet.interaction.json file
-  ADDRESS="erd1qqqqqqqqqqqqqpgqd8vswwygp8sgmm6rd2x4rfgxjvv4fa93fsxsks7y6q"
+  ADDRESS="erd1qqqqqqqqqqqqqpgqwu6qz3skzzdnmvnkknjngvrprpt4fwzffsxsr8ecca"
 }
 
 setClaimToken(){
