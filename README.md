@@ -261,7 +261,7 @@ This smart contract, albeit being a simple one, aims to set the standard when it
 - Note that these are also needed before upgrading where things like the MX libs have been changed from previous version
 - Uses `multiversx-sc-* 0.39.5` (starting v3.0.0, we used 0.43.4) SDK libs (see Cargo.toml)
 - Building requires minimum **mxpy 6.1.1** (starting v3.0.0, we used mxpy 8.1.2). Check version using `mxpy --version`
-- To build the project, requires minimum Rust version `1.68.0-nightly` (staring v3.0.0, we used 1.75.0-nightly). Check your Rust version by running `rustc --version`. To update your Rust, run `rustup update`. To set to nightly run `rustup default nightly` (devs used 1.69.0-nightly)
+- To build the project, requires minimum Rust version `1.68.0-nightly` (staring v3.0.0, we used 1.75.0-nightly). Check your Rust version by running `rustup --version`. To update your Rust, run `rustup update`. To set to nightly run `rustup default nightly`
 - After you make sure you have the minimum Rust version you can then begin development. After you clone repo and before you run build, deploy or run the tests - follow these steps
 
 ```
@@ -291,8 +291,13 @@ The Claims Smart Contract is structured in 5 files:
 The tests are located in the tests folder, in the rust_tests file. In order to run the tests one can use the command:
 
 ```shell
-    cargo test --package claims --test rust_tests -- --nocapture
+    cargo test --package claims --test blackbox_tests --  --nocapture
+    cargo test --package claims --test whitebox_tests --  --nocapture
 ```
+
+- Note that in Oct 2023, we moved to blackbox and whitebox testing as recommended by the multiversX dev docs. You can run both as above.
+
+- Also note that, newer version of the Claims contract has a integration with the Factory contract (which is private), so we have to locally reference this file in `Cargo.toml`. i.e. `core-mx-minter-factory-sc = { path = "/local..path..to/core-mx-minter-factory-sc" }`
 
 Another way of running the tests is by using the rust-analyzer extension in Visual Studio Code, which is also very helpful for MultiversX Smart Contract development. If one has the extension installed, they can go open and go to the top of the rust_tests file and click the Run Tests button.
 
