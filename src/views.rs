@@ -17,7 +17,7 @@ pub trait ViewsModule: storage::StorageModule {
     #[view(viewClaims)]
     fn view_claims(&self, address: &ManagedAddress) -> BigUint {
         let mut claim = BigUint::zero();
-        for claim_type in 0..ClaimType::len() + 1 {
+        for claim_type in 0..ClaimType::len() {
             claim += self.claim(address, &ClaimType::from(claim_type)).get();
         }
 
@@ -28,7 +28,7 @@ pub trait ViewsModule: storage::StorageModule {
     #[view(viewClaimWithDate)]
     fn view_claims_with_date(&self, address: &ManagedAddress) -> ManagedVec<Claim<Self::Api>> {
         let mut claims = ManagedVec::new();
-        for claim_type in 0..ClaimType::len() + 1 {
+        for claim_type in 0..ClaimType::len() {
             claims.push(Claim {
                 amount: self.claim(address, &ClaimType::from(claim_type)).get(),
                 date: self
